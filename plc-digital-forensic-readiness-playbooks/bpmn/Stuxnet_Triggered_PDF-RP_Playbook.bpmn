@@ -1,0 +1,744 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bioc="http://bpmn.io/schema/bpmn/biocolor/1.0" xmlns:color="http://www.omg.org/spec/BPMN/non-normative/color/1.0" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:ns1="http://camunda.org/schema/modeler/1.0" id="Definitions_PVD_T0836_T0835" targetNamespace="http://example.org/pdf-rp" exporter="Camunda Modeler" exporterVersion="5.38.1" ns1:executionPlatform="Camunda Cloud" ns1:executionPlatformVersion="8.7.0">
+  <collaboration id="Collab_PVD">
+    <participant id="Participant_PVD" name="PDF-RP Playbook — Investigate Process–I/O Divergence (T0836/T0835)" processRef="Process_PVD" />
+    <textAnnotation id="Annot_Ref">
+      <text>References: Vendor export guides (HMI/PLC snapshots); Historian query procedure (OPC Kepware Data Logger Configurations)</text>
+    </textAnnotation>
+  </collaboration>
+  <process id="Process_PVD" name="PVD T0836/T0835" isExecutable="true">
+    <extensionElements>
+      <zeebe:properties>
+        <zeebe:property name="pdfrp:playbookID" value="PB-PVD-001" />
+        <zeebe:property name="pdfrp:playbookName" value="Investigate Process–View Divergence" />
+        <zeebe:property name="pdfrp:playbookObjective" value="Detect and explain divergence between process parameters and I/O behaviour" />
+        <zeebe:property name="pdfrp:forensicStage" value="ONGOING" />
+        <zeebe:property name="pdfrp:triggeringCondition" value="Process–I/O divergence suspected" />
+        <zeebe:property name="pdfrp:version" value="1.0" />
+        <zeebe:property name="pdfrp:author" value="Feras Shahbi" />
+      </zeebe:properties>
+    </extensionElements>
+    <startEvent id="Start_PVD" name="Process–I/O divergence suspected">
+      <outgoing>Flow_Start_To_T0836</outgoing>
+    </startEvent>
+    <exclusiveGateway id="Gateway_Decide" name="Any divergence confirmed?">
+      <incoming>Flow_0qfvlw9</incoming>
+      <outgoing>Flow_185crx8</outgoing>
+      <outgoing>Flow_0mfjryx</outgoing>
+    </exclusiveGateway>
+    <callActivity id="Call_T0843" name="Calling Another Playbook: Investigate Program Download (T0843)" calledElement="Process_T0843_ProgramDownload">
+      <extensionElements>
+        <zeebe:calledElement value="Process_T0843_ProgramDownload" />
+        <zeebe:properties>
+          <zeebe:property name="pdfrp:note" value="Ensure calledElement matches your T0843 process id" />
+          <zeebe:property name="pdfrp:toolCapability" value="true" />
+          <zeebe:property name="pdfrp:toolCapability.capabilityName" value="Diff PLC control logic" />
+          <zeebe:property name="pdfrp:toolCapability.toolName" value="ICSpector (example)" />
+          <zeebe:property name="pdfrp:toolCapability.toolType" value="Logic diff analyzer" />
+          <zeebe:property name="pdfrp:toolCapability.deviceScope" value="SIMATIC S7 project" />
+          <zeebe:property name="pdfrp:toolCapability.privilegeLevel" value="Offline project access" />
+          <zeebe:property name="pdfrp:role" value="Forensic Analyst (Human)" />
+        </zeebe:properties>
+      </extensionElements>
+      <incoming>Flow_185crx8</incoming>
+      <outgoing>Flow_1h0wjlv</outgoing>
+    </callActivity>
+    <endEvent id="End_Escalate" name="Incident escalated / follow-up">
+      <incoming>Flow_1h0wjlv</incoming>
+    </endEvent>
+    <userTask id="Task_ConfirmClose" name="Confirm integrity &#38; close [M]">
+      <extensionElements>
+        <zeebe:userTask />
+        <zeebe:properties>
+          <zeebe:property name="pdfrp:forensicPhase" value="ANALYSIS" />
+          <zeebe:property name="pdfrp:executionMode" value="MANUAL" />
+          <zeebe:property name="pdfrp:isOptional" value="false" />
+          <zeebe:property name="pdfrp:safety_grade" value="HIGH" />
+          <zeebe:property name="pdfrp:role" value="Forensic Analyst (Human)" />
+        </zeebe:properties>
+      </extensionElements>
+      <incoming>Flow_0mfjryx</incoming>
+      <outgoing>Flow_1eah4mi</outgoing>
+    </userTask>
+    <endEvent id="End_Close" name="Investigation end">
+      <incoming>Flow_1eah4mi</incoming>
+    </endEvent>
+    <parallelGateway id="GW_AND_Split">
+      <incoming>Flow_1qbxz07</incoming>
+      <outgoing>Flow_14up8e9</outgoing>
+      <outgoing>Flow_0ofprgs</outgoing>
+    </parallelGateway>
+    <userTask id="Task_AnalyzeParams" name="Correlate Parameters vs Baseline/Historian [SA]">
+      <extensionElements>
+        <zeebe:userTask />
+        <zeebe:properties>
+          <zeebe:property name="pdfrp:forensicPhase" value="ANALYSIS" />
+          <zeebe:property name="pdfrp:executionMode" value="SEMI_AUTOMATIC" />
+          <zeebe:property name="pdfrp:isOptional" value="false" />
+          <zeebe:property name="pdfrp:safety_grade" value="HIGH" />
+          <zeebe:property name="pdfrp:role" value="Forensic Analyst (Human)" />
+        </zeebe:properties>
+      </extensionElements>
+      <incoming>Flow_14up8e9</incoming>
+      <outgoing>Flow_0tpbgff</outgoing>
+    </userTask>
+    <userTask id="Task_AnalyzeIO" name="Correlate I/O Image vs Model/Historian [SA]">
+      <extensionElements>
+        <zeebe:userTask />
+        <zeebe:properties>
+          <zeebe:property name="pdfrp:forensicPhase" value="ANALYSIS" />
+          <zeebe:property name="pdfrp:executionMode" value="SEMI_AUTOMATIC" />
+          <zeebe:property name="pdfrp:isOptional" value="false" />
+          <zeebe:property name="pdfrp:safety_grade" value="HIGH" />
+          <zeebe:property name="pdfrp:role" value="Forensic Analyst (Human)" />
+        </zeebe:properties>
+      </extensionElements>
+      <incoming>Flow_0ofprgs</incoming>
+      <outgoing>Flow_0xm4tna</outgoing>
+    </userTask>
+    <parallelGateway id="GW_AND_Join">
+      <incoming>Flow_0tpbgff</incoming>
+      <incoming>Flow_0xm4tna</incoming>
+      <outgoing>Flow_0qfvlw9</outgoing>
+    </parallelGateway>
+    <dataStoreReference id="DS_Prov" name="Provenance">
+      <extensionElements>
+        <zeebe:properties>
+          <zeebe:property name="pdfrp:fvf_version" value="1.0" />
+          <zeebe:property name="pdfrp:px_version" value="1.0" />
+          <zeebe:property name="pdfrp:sand_model_id" value="PVD-Model-01" />
+          <zeebe:property name="pdfrp:generated_at" value="2025-09-11T00:00:00Z" />
+        </zeebe:properties>
+      </extensionElements>
+    </dataStoreReference>
+    <subProcess id="Sub_T0836" name="T0836 — Modify Parameter (SAND)">
+      <extensionElements>
+        <zeebe:properties>
+          <zeebe:property name="pdfrp:technique_id" value="T0836" />
+          <zeebe:property name="pdfrp:orderingConstraint" value="SAND" />
+        </zeebe:properties>
+      </extensionElements>
+      <outgoing>Flow_16ir18g</outgoing>
+      <userTask id="T0836_Task_PC" name="1. Acquire Process Config Values [SA]">
+        <extensionElements>
+          <zeebe:userTask />
+          <zeebe:properties>
+            <zeebe:property name="pdfrp:forensicPhase" value="COLLECTION" />
+            <zeebe:property name="pdfrp:executionMode" value="SEMI_AUTOMATIC" />
+            <zeebe:property name="pdfrp:isOptional" value="false" />
+            <zeebe:property name="pdfrp:safety_grade" value="HIGH" />
+            <zeebe:property name="pdfrp:toolCapability" value="true" />
+            <zeebe:property name="pdfrp:toolCapability.capabilityName" value="Export PLC process configuration snapshot" />
+            <zeebe:property name="pdfrp:toolCapability.toolName" value="TIA Portal (Siemens)" />
+            <zeebe:property name="pdfrp:toolCapability.toolType" value="Vendor engineering workstation" />
+            <zeebe:property name="pdfrp:toolCapability.deviceScope" value="SIMATIC S7‑1200 (e.g., S7‑1214SP V2.9.2)" />
+            <zeebe:property name="pdfrp:toolCapability.privilegeLevel" value="Engineering (online read)" />
+            <zeebe:property name="pdfrp:role" value="Forensic Analyst (Human)" />
+          </zeebe:properties>
+        </extensionElements>
+        <outgoing>Flow_PC_to_PI</outgoing>
+        <outgoing>Flow_117av7h</outgoing>
+      </userTask>
+      <userTask id="T0836_Task_PI" name="2. Snapshot Measurement Values [SA]">
+        <extensionElements>
+          <zeebe:userTask />
+          <zeebe:properties>
+            <zeebe:property name="pdfrp:forensicPhase" value="COLLECTION" />
+            <zeebe:property name="pdfrp:executionMode" value="SEMI_AUTOMATIC" />
+            <zeebe:property name="pdfrp:isOptional" value="false" />
+            <zeebe:property name="pdfrp:safety_grade" value="HIGH" />
+            <zeebe:property name="pdfrp:role" value="Forensic Analyst (Human)" />
+          </zeebe:properties>
+        </extensionElements>
+        <incoming>Flow_PC_to_PI</incoming>
+        <incoming>Flow_117av7h</incoming>
+        <outgoing>Flow_PI_to_PS</outgoing>
+        <outgoing>Flow_017gyo9</outgoing>
+      </userTask>
+      <sequenceFlow id="Flow_PC_to_PI" sourceRef="T0836_Task_PC" targetRef="T0836_Task_PI" />
+      <sequenceFlow id="Flow_PI_to_PS" sourceRef="T0836_Task_PI" targetRef="T0836_Task_PS" />
+      <sequenceFlow id="Flow_PS_to_SL" sourceRef="T0836_Task_PS" targetRef="T0836_Task_SL" />
+      <dataObject id="DO_PC" />
+      <dataObjectReference id="DOR_PC" name="Process Configuration Values (Π_s = 0.411)" dataObjectRef="DO_PC">
+        <extensionElements>
+          <zeebe:properties>
+            <zeebe:property name="pdfrp:artefactID" value="PC" />
+            <zeebe:property name="pdfrp:V_base" value="0.411" />
+            <zeebe:property name="pdfrp:P_x" value="1" />
+            <zeebe:property name="pdfrp:Pi_s" value="0.411" />
+          </zeebe:properties>
+        </extensionElements>
+      </dataObjectReference>
+      <dataObject id="DO_PI" />
+      <dataObjectReference id="DOR_PI" name="Measurement Values (Π_s = 0.277)" dataObjectRef="DO_PI">
+        <extensionElements>
+          <zeebe:properties>
+            <zeebe:property name="pdfrp:artefactID" value="PI" />
+            <zeebe:property name="pdfrp:V_base" value="0.553" />
+            <zeebe:property name="pdfrp:P_x" value="0.5" />
+            <zeebe:property name="pdfrp:Pi_s" value="0.277" />
+          </zeebe:properties>
+        </extensionElements>
+      </dataObjectReference>
+      <dataObject id="DO_PS" />
+      <dataObjectReference id="DOR_PS" name="Program State Values (Π_s = 0.263)" dataObjectRef="DO_PS">
+        <extensionElements>
+          <zeebe:properties>
+            <zeebe:property name="pdfrp:artefactID" value="PS" />
+            <zeebe:property name="pdfrp:V_base" value="0.525" />
+            <zeebe:property name="pdfrp:P_x" value="0.5" />
+            <zeebe:property name="pdfrp:Pi_s" value="0.263" />
+          </zeebe:properties>
+        </extensionElements>
+      </dataObjectReference>
+      <dataObject id="DO_SL" />
+      <dataObjectReference id="DOR_SL" name="PLC Status Logs (Π_s = 0.245)" dataObjectRef="DO_SL">
+        <extensionElements>
+          <zeebe:properties>
+            <zeebe:property name="pdfrp:artefactID" value="SL" />
+            <zeebe:property name="pdfrp:V_base" value="0.490" />
+            <zeebe:property name="pdfrp:P_x" value="0.5" />
+            <zeebe:property name="pdfrp:Pi_s" value="0.245" />
+          </zeebe:properties>
+        </extensionElements>
+      </dataObjectReference>
+      <dataObjectReference id="DataObjectRef_PC_T0836_Task_PC" name="Process Config Values (Πs=0.411)" dataObjectRef="DataObject_PC_T0836_Task_PC">
+        <extensionElements>
+          <zeebe:properties>
+            <zeebe:property name="pdfrp:artefactID" value="PC" />
+            <zeebe:property name="pdfrp:V_base" value="0.411" />
+            <zeebe:property name="pdfrp:P_x" value="1" />
+            <zeebe:property name="pdfrp:Pi_s" value="0.411" />
+          </zeebe:properties>
+        </extensionElements>
+      </dataObjectReference>
+      <dataObject id="DataObject_PC_T0836_Task_PC" name="Process Configuration Values (Πs=0.411)" />
+      <dataObjectReference id="DataObjectRef_PI_T0836_Task_PI" name="Measurement Values (Πs=0.277)" dataObjectRef="DataObject_PI_T0836_Task_PI">
+        <extensionElements>
+          <zeebe:properties>
+            <zeebe:property name="pdfrp:artefactID" value="PI" />
+            <zeebe:property name="pdfrp:V_base" value="0.553" />
+            <zeebe:property name="pdfrp:P_x" value="0.5" />
+            <zeebe:property name="pdfrp:Pi_s" value="0.277" />
+          </zeebe:properties>
+        </extensionElements>
+      </dataObjectReference>
+      <dataObject id="DataObject_PI_T0836_Task_PI" name="Measurement Values (Πs=0.277)" />
+      <userTask id="T0836_Task_PS" name="3. Snapshot Program State [SA]">
+        <extensionElements>
+          <zeebe:userTask />
+          <zeebe:properties>
+            <zeebe:property name="pdfrp:forensicPhase" value="COLLECTION" />
+            <zeebe:property name="pdfrp:executionMode" value="SEMI_AUTOMATIC" />
+            <zeebe:property name="pdfrp:isOptional" value="false" />
+            <zeebe:property name="pdfrp:safety_grade" value="HIGH" />
+            <zeebe:property name="pdfrp:role" value="Forensic Analyst (Human)" />
+          </zeebe:properties>
+        </extensionElements>
+        <incoming>Flow_PI_to_PS</incoming>
+        <incoming>Flow_017gyo9</incoming>
+        <outgoing>Flow_PS_to_SL</outgoing>
+        <outgoing>Flow_0td1hji</outgoing>
+      </userTask>
+      <dataObjectReference id="DataObjectRef_PS_T0836_Task_PS" name="Program State Values (Πs=0.263)" dataObjectRef="DataObject_PS_T0836_Task_PS">
+        <extensionElements>
+          <zeebe:properties>
+            <zeebe:property name="pdfrp:artefactID" value="PS" />
+            <zeebe:property name="pdfrp:V_base" value="0.525" />
+            <zeebe:property name="pdfrp:P_x" value="0.5" />
+            <zeebe:property name="pdfrp:Pi_s" value="0.263" />
+          </zeebe:properties>
+        </extensionElements>
+      </dataObjectReference>
+      <dataObject id="DataObject_PS_T0836_Task_PS" name="Program State Values (Πs=0.263)" />
+      <userTask id="T0836_Task_SL" name="4. Check PLC Status Logs [SA]">
+        <extensionElements>
+          <zeebe:userTask />
+          <zeebe:properties>
+            <zeebe:property name="pdfrp:forensicPhase" value="COLLECTION" />
+            <zeebe:property name="pdfrp:executionMode" value="SEMI_AUTOMATIC" />
+            <zeebe:property name="pdfrp:isOptional" value="false" />
+            <zeebe:property name="pdfrp:safety_grade" value="HIGH" />
+            <zeebe:property name="pdfrp:role" value="Forensic Analyst (Human)" />
+          </zeebe:properties>
+        </extensionElements>
+        <incoming>Flow_PS_to_SL</incoming>
+        <incoming>Flow_0td1hji</incoming>
+      </userTask>
+      <dataObjectReference id="DataObjectRef_SL_T0836_Task_SL" name="PLC Status Logs (Πs=0.245)" dataObjectRef="DataObject_SL_T0836_Task_SL">
+        <extensionElements>
+          <zeebe:properties>
+            <zeebe:property name="pdfrp:artefactID" value="SL" />
+            <zeebe:property name="pdfrp:V_base" value="0.49" />
+            <zeebe:property name="pdfrp:P_x" value="0.5" />
+            <zeebe:property name="pdfrp:Pi_s" value="0.245" />
+          </zeebe:properties>
+        </extensionElements>
+      </dataObjectReference>
+      <dataObject id="DataObject_SL_T0836_Task_SL" name="PLC Status Logs (Πs=0.245)" />
+      <sequenceFlow id="Flow_017gyo9" sourceRef="T0836_Task_PI" targetRef="T0836_Task_PS" />
+      <sequenceFlow id="Flow_117av7h" sourceRef="T0836_Task_PC" targetRef="T0836_Task_PI" />
+      <sequenceFlow id="Flow_0td1hji" sourceRef="T0836_Task_PS" targetRef="T0836_Task_SL" />
+      <association id="Assoc_PC" sourceRef="T0836_Task_PC" targetRef="DOR_PC" />
+      <association id="Assoc_PI" sourceRef="T0836_Task_PI" targetRef="DOR_PI" />
+      <association id="Assoc_PS" sourceRef="T0836_Task_PS" targetRef="DOR_PS" />
+      <association id="Assoc_SL" sourceRef="T0836_Task_SL" targetRef="DOR_SL" />
+    </subProcess>
+    <subProcess id="Sub_T0835" name="T0835 — Manipulate I/O Image (SAND)">
+      <extensionElements>
+        <zeebe:properties>
+          <zeebe:property name="pdfrp:technique_id" value="T0835" />
+          <zeebe:property name="pdfrp:orderingConstraint" value="SAND" />
+        </zeebe:properties>
+      </extensionElements>
+      <incoming>Flow_16ir18g</incoming>
+      <outgoing>Flow_1qbxz07</outgoing>
+      <userTask id="T0835_Task_PI" name="1. Acquire Measurement Snapshot [SA]">
+        <extensionElements>
+          <zeebe:userTask />
+          <zeebe:properties>
+            <zeebe:property name="pdfrp:forensicPhase" value="COLLECTION" />
+            <zeebe:property name="pdfrp:executionMode" value="SEMI_AUTOMATIC" />
+            <zeebe:property name="pdfrp:isOptional" value="false" />
+            <zeebe:property name="pdfrp:safety_grade" value="HIGH" />
+            <zeebe:property name="pdfrp:toolCapability" value="true" />
+            <zeebe:property name="pdfrp:toolCapability.capabilityName" value="Query live measurement values" />
+            <zeebe:property name="pdfrp:toolCapability.toolName" value="Historian / OPC UA client" />
+            <zeebe:property name="pdfrp:toolCapability.toolType" value="Historian query / API client" />
+            <zeebe:property name="pdfrp:toolCapability.deviceScope" value="Plant historian or PLC OPC UA endpoint" />
+            <zeebe:property name="pdfrp:toolCapability.privilegeLevel" value="Read‑only operator" />
+            <zeebe:property name="pdfrp:role" value="Forensic Analyst (Human)" />
+          </zeebe:properties>
+        </extensionElements>
+        <outgoing>Flow_PI_to_PO</outgoing>
+        <outgoing>Flow_1xnpzb8</outgoing>
+      </userTask>
+      <userTask id="T0835_Task_PO" name="2. Acquire Output Snapshot [SA]">
+        <extensionElements>
+          <zeebe:userTask />
+          <zeebe:properties>
+            <zeebe:property name="pdfrp:forensicPhase" value="COLLECTION" />
+            <zeebe:property name="pdfrp:executionMode" value="SEMI_AUTOMATIC" />
+            <zeebe:property name="pdfrp:isOptional" value="false" />
+            <zeebe:property name="pdfrp:safety_grade" value="HIGH" />
+            <zeebe:property name="pdfrp:role" value="Forensic Analyst (Human)" />
+          </zeebe:properties>
+        </extensionElements>
+        <incoming>Flow_PI_to_PO</incoming>
+        <incoming>Flow_1xnpzb8</incoming>
+        <outgoing>Flow_PO_to_MNPS</outgoing>
+        <outgoing>Flow_04o6lud</outgoing>
+      </userTask>
+      <sequenceFlow id="Flow_PI_to_PO" sourceRef="T0835_Task_PI" targetRef="T0835_Task_PO" />
+      <sequenceFlow id="Flow_PO_to_MNPS" sourceRef="T0835_Task_PO" targetRef="T0835_Task_MNPS" />
+      <sequenceFlow id="Flow_MNPS_to_PR" sourceRef="T0835_Task_MNPS" targetRef="T0835_Task_PR" />
+      <dataObject id="DO2_PI" />
+      <dataObjectReference id="DOR2_PI" name="Measurement Values (Π_s = 0.553)" dataObjectRef="DO2_PI">
+        <extensionElements>
+          <zeebe:properties>
+            <zeebe:property name="pdfrp:artefactID" value="PI" />
+            <zeebe:property name="pdfrp:V_base" value="0.553" />
+            <zeebe:property name="pdfrp:P_x" value="1" />
+            <zeebe:property name="pdfrp:Pi_s" value="0.553" />
+          </zeebe:properties>
+        </extensionElements>
+      </dataObjectReference>
+      <dataObject id="DO2_PO" />
+      <dataObjectReference id="DOR2_PO" name="Process Output Values (Π_s = 0.539)" dataObjectRef="DO2_PO">
+        <extensionElements>
+          <zeebe:properties>
+            <zeebe:property name="pdfrp:artefactID" value="PO" />
+            <zeebe:property name="pdfrp:V_base" value="0.539" />
+            <zeebe:property name="pdfrp:P_x" value="1" />
+            <zeebe:property name="pdfrp:Pi_s" value="0.539" />
+          </zeebe:properties>
+        </extensionElements>
+      </dataObjectReference>
+      <dataObject id="DO2_MN" />
+      <dataObjectReference id="DOR2_MN" name="Non‑retentive Memory Bits (Π_s = 0.263)" dataObjectRef="DO2_MN">
+        <extensionElements>
+          <zeebe:properties>
+            <zeebe:property name="pdfrp:artefactID" value="MN" />
+            <zeebe:property name="pdfrp:V_base" value="0.525" />
+            <zeebe:property name="pdfrp:P_x" value="0.5" />
+            <zeebe:property name="pdfrp:Pi_s" value="0.263" />
+          </zeebe:properties>
+        </extensionElements>
+      </dataObjectReference>
+      <dataObject id="DO2_PS" />
+      <dataObjectReference id="DOR2_PS" name="Program State Values (Π_s = 0.263)" dataObjectRef="DO2_PS">
+        <extensionElements>
+          <zeebe:properties>
+            <zeebe:property name="pdfrp:artefactID" value="PS" />
+            <zeebe:property name="pdfrp:V_base" value="0.525" />
+            <zeebe:property name="pdfrp:P_x" value="0.5" />
+            <zeebe:property name="pdfrp:Pi_s" value="0.263" />
+          </zeebe:properties>
+        </extensionElements>
+      </dataObjectReference>
+      <dataObject id="DO2_PR" />
+      <dataObjectReference id="DOR2_PR" name="Process Reporting Values (Π_s = 0.188)" dataObjectRef="DO2_PR">
+        <extensionElements>
+          <zeebe:properties>
+            <zeebe:property name="pdfrp:artefactID" value="PR" />
+            <zeebe:property name="pdfrp:V_base" value="0.375" />
+            <zeebe:property name="pdfrp:P_x" value="0.5" />
+            <zeebe:property name="pdfrp:Pi_s" value="0.188" />
+          </zeebe:properties>
+        </extensionElements>
+      </dataObjectReference>
+      <dataObjectReference id="DataObjectRef_PI_T0835_Task_PI" name="Measurement Values (Πs=0.553)" dataObjectRef="DataObject_PI_T0835_Task_PI">
+        <extensionElements>
+          <zeebe:properties>
+            <zeebe:property name="pdfrp:artefactID" value="PI" />
+            <zeebe:property name="pdfrp:V_base" value="0.553" />
+            <zeebe:property name="pdfrp:P_x" value="1" />
+            <zeebe:property name="pdfrp:Pi_s" value="0.553" />
+          </zeebe:properties>
+        </extensionElements>
+      </dataObjectReference>
+      <dataObject id="DataObject_PI_T0835_Task_PI" name="Measurement Values (Πs=0.553)" />
+      <dataObjectReference id="DataObjectRef_PO_T0835_Task_PO" name="Process Output Values (Πs=0.539)" dataObjectRef="DataObject_PO_T0835_Task_PO">
+        <extensionElements>
+          <zeebe:properties>
+            <zeebe:property name="pdfrp:artefactID" value="PO" />
+            <zeebe:property name="pdfrp:V_base" value="0.539" />
+            <zeebe:property name="pdfrp:P_x" value="1" />
+            <zeebe:property name="pdfrp:Pi_s" value="0.539" />
+          </zeebe:properties>
+        </extensionElements>
+      </dataObjectReference>
+      <dataObject id="DataObject_PO_T0835_Task_PO" name="Process Output Values (Πs=0.539)" />
+      <userTask id="T0835_Task_MNPS" name="3 Snapshot Volatile State &#38; Program State [SA]">
+        <extensionElements>
+          <zeebe:userTask />
+          <zeebe:properties>
+            <zeebe:property name="pdfrp:forensicPhase" value="COLLECTION" />
+            <zeebe:property name="pdfrp:executionMode" value="SEMI_AUTOMATIC" />
+            <zeebe:property name="pdfrp:isOptional" value="false" />
+            <zeebe:property name="pdfrp:safety_grade" value="HIGH" />
+            <zeebe:property name="pdfrp:role" value="Forensic Analyst (Human)" />
+          </zeebe:properties>
+        </extensionElements>
+        <incoming>Flow_PO_to_MNPS</incoming>
+        <incoming>Flow_04o6lud</incoming>
+        <outgoing>Flow_MNPS_to_PR</outgoing>
+        <outgoing>Flow_17eqvkv</outgoing>
+      </userTask>
+      <dataObjectReference id="DataObjectRef_MN_T0835_Task_MNPS" name="Non‑ret. Memory Bits (Πs=0.26)" dataObjectRef="DataObject_MN_T0835_Task_MNPS">
+        <extensionElements>
+          <zeebe:properties>
+            <zeebe:property name="pdfrp:artefactID" value="MN" />
+            <zeebe:property name="pdfrp:V_base" value="0.525" />
+            <zeebe:property name="pdfrp:P_x" value="0.5" />
+            <zeebe:property name="pdfrp:Pi_s" value="0.263" />
+          </zeebe:properties>
+        </extensionElements>
+      </dataObjectReference>
+      <dataObject id="DataObject_MN_T0835_Task_MNPS" name="Non‑retentive Memory Bits (Πs=0.263)" />
+      <dataObjectReference id="DataObjectRef_PS_T0835_Task_MNPS" name="Prog. State Values (Πs=0.26)" dataObjectRef="DataObject_PS_T0835_Task_MNPS">
+        <extensionElements>
+          <zeebe:properties>
+            <zeebe:property name="pdfrp:artefactID" value="PS" />
+            <zeebe:property name="pdfrp:V_base" value="0.525" />
+            <zeebe:property name="pdfrp:P_x" value="0.5" />
+            <zeebe:property name="pdfrp:Pi_s" value="0.263" />
+          </zeebe:properties>
+        </extensionElements>
+      </dataObjectReference>
+      <dataObject id="DataObject_PS_T0835_Task_MNPS" name="Program State Values (Πs=0.263)" />
+      <userTask id="T0835_Task_PR" name="4. Review Process Reporting Values [SA]">
+        <extensionElements>
+          <zeebe:userTask />
+          <zeebe:properties>
+            <zeebe:property name="pdfrp:forensicPhase" value="COLLECTION" />
+            <zeebe:property name="pdfrp:executionMode" value="SEMI_AUTOMATIC" />
+            <zeebe:property name="pdfrp:isOptional" value="false" />
+            <zeebe:property name="pdfrp:safety_grade" value="HIGH" />
+            <zeebe:property name="pdfrp:role" value="Forensic Analyst (Human)" />
+          </zeebe:properties>
+        </extensionElements>
+        <incoming>Flow_MNPS_to_PR</incoming>
+        <incoming>Flow_17eqvkv</incoming>
+      </userTask>
+      <dataObjectReference id="DataObjectRef_PR_T0835_Task_PR" name="Process Report Values (Πs=0.188)" dataObjectRef="DataObject_PR_T0835_Task_PR">
+        <extensionElements>
+          <zeebe:properties>
+            <zeebe:property name="pdfrp:artefactID" value="PR" />
+            <zeebe:property name="pdfrp:V_base" value="0.375" />
+            <zeebe:property name="pdfrp:P_x" value="0.5" />
+            <zeebe:property name="pdfrp:Pi_s" value="0.188" />
+          </zeebe:properties>
+        </extensionElements>
+      </dataObjectReference>
+      <dataObject id="DataObject_PR_T0835_Task_PR" name="Process Reporting Values (Πs=0.188)" />
+      <sequenceFlow id="Flow_1xnpzb8" sourceRef="T0835_Task_PI" targetRef="T0835_Task_PO" />
+      <sequenceFlow id="Flow_04o6lud" sourceRef="T0835_Task_PO" targetRef="T0835_Task_MNPS" />
+      <sequenceFlow id="Flow_17eqvkv" sourceRef="T0835_Task_MNPS" targetRef="T0835_Task_PR" />
+      <association id="Assoc2_PI" sourceRef="T0835_Task_PI" targetRef="DOR2_PI" />
+      <association id="Assoc2_PO" sourceRef="T0835_Task_PO" targetRef="DOR2_PO" />
+      <association id="Assoc2_MN" sourceRef="T0835_Task_MNPS" targetRef="DOR2_MN" />
+      <association id="Assoc2_PS" sourceRef="T0835_Task_MNPS" targetRef="DOR2_PS" />
+      <association id="Assoc2_PR" sourceRef="T0835_Task_PR" targetRef="DOR2_PR" />
+    </subProcess>
+    <sequenceFlow id="Flow_Start_To_T0836" sourceRef="Start_PVD" targetRef="Sub_T0836" />
+    <sequenceFlow id="Flow_0qfvlw9" sourceRef="GW_AND_Join" targetRef="Gateway_Decide" />
+    <sequenceFlow id="Flow_185crx8" name="Yes" sourceRef="Gateway_Decide" targetRef="Call_T0843" />
+    <sequenceFlow id="Flow_0mfjryx" name="No" sourceRef="Gateway_Decide" targetRef="Task_ConfirmClose" />
+    <sequenceFlow id="Flow_1h0wjlv" sourceRef="Call_T0843" targetRef="End_Escalate" />
+    <sequenceFlow id="Flow_1eah4mi" sourceRef="Task_ConfirmClose" targetRef="End_Close" />
+    <sequenceFlow id="Flow_1qbxz07" sourceRef="Sub_T0835" targetRef="GW_AND_Split" />
+    <sequenceFlow id="Flow_14up8e9" sourceRef="GW_AND_Split" targetRef="Task_AnalyzeParams" />
+    <sequenceFlow id="Flow_0ofprgs" sourceRef="GW_AND_Split" targetRef="Task_AnalyzeIO" />
+    <sequenceFlow id="Flow_0tpbgff" sourceRef="Task_AnalyzeParams" targetRef="GW_AND_Join" />
+    <sequenceFlow id="Flow_0xm4tna" sourceRef="Task_AnalyzeIO" targetRef="GW_AND_Join" />
+    <sequenceFlow id="Flow_16ir18g" sourceRef="Sub_T0836" targetRef="Sub_T0835" />
+  </process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_PVD">
+    <bpmndi:BPMNPlane id="BPMNPlane_PVD" bpmnElement="Collab_PVD">
+      <bpmndi:BPMNShape id="Participant_PVD_di" bpmnElement="Participant_PVD" isHorizontal="true">
+        <dc:Bounds x="140" y="80" width="850" height="900" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Start_PVD_di" bpmnElement="Start_PVD">
+        <dc:Bounds x="352" y="132" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="339" y="82" width="61" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_Decide_di" bpmnElement="Gateway_Decide" isMarkerVisible="true">
+        <dc:Bounds x="455" y="695" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="442.5" y="658" width="75" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Call_T0843_di" bpmnElement="Call_T0843" bioc:stroke="#0d4372" bioc:fill="#bbdefb" color:background-color="#bbdefb" color:border-color="#0d4372">
+        <dc:Bounds x="230" y="590" width="160" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Escalate_di" bpmnElement="End_Escalate">
+        <dc:Bounds x="202" y="702" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="176" y="738" width="89" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_ConfirmClose_di" bpmnElement="Task_ConfirmClose" bioc:stroke="#205022" bioc:fill="#c8e6c9" color:background-color="#c8e6c9" color:border-color="#205022">
+        <dc:Bounds x="230" y="780" width="160" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Close_di" bpmnElement="End_Close">
+        <dc:Bounds x="202" y="872" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="178" y="908" width="84" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_AND_Split_di" bpmnElement="GW_AND_Split">
+        <dc:Bounds x="747" y="585" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_AnalyzeParams_di" bpmnElement="Task_AnalyzeParams" bioc:stroke="#205022" bioc:fill="#c8e6c9" color:background-color="#c8e6c9" color:border-color="#205022">
+        <dc:Bounds x="790" y="680" width="180" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_AnalyzeIO_di" bpmnElement="Task_AnalyzeIO" bioc:stroke="#205022" bioc:fill="#c8e6c9" color:background-color="#c8e6c9" color:border-color="#205022">
+        <dc:Bounds x="552" y="680" width="180" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_AND_Join_di" bpmnElement="GW_AND_Join">
+        <dc:Bounds x="747" y="785" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DS_Prov_di" bpmnElement="DS_Prov">
+        <dc:Bounds x="915" y="914" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="911" y="964" width="59" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Sub_T0836_di" bpmnElement="Sub_T0836" isExpanded="true">
+        <dc:Bounds x="174" y="190" width="376" height="360" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T0836_Task_PC_di" bpmnElement="T0836_Task_PC" bioc:stroke="#6b3c00" bioc:fill="#ffe0b2" color:background-color="#ffe0b2" color:border-color="#6b3c00">
+        <dc:Bounds x="194" y="227" width="140" height="70" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T0836_Task_PI_di" bpmnElement="T0836_Task_PI" bioc:stroke="#6b3c00" bioc:fill="#ffe0b2" color:background-color="#ffe0b2" color:border-color="#6b3c00">
+        <dc:Bounds x="369" y="227" width="140" height="70" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DataObjectRef_PC_T0836_Task_PC_di" bpmnElement="DataObjectRef_PC_T0836_Task_PC">
+        <dc:Bounds x="246" y="285" width="36" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="219" y="335" width="90" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DataObjectRef_PI_T0836_Task_PI_di" bpmnElement="DataObjectRef_PI_T0836_Task_PI">
+        <dc:Bounds x="421" y="285" width="36" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="394" y="335" width="90" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T0836_Task_PS_di" bpmnElement="T0836_Task_PS" bioc:stroke="#6b3c00" bioc:fill="#ffe0b2" color:background-color="#ffe0b2" color:border-color="#6b3c00">
+        <dc:Bounds x="369" y="404" width="140" height="70" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DataObjectRef_PS_T0836_Task_PS_di" bpmnElement="DataObjectRef_PS_T0836_Task_PS">
+        <dc:Bounds x="421" y="461" width="36" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="394" y="511" width="90" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T0836_Task_SL_di" bpmnElement="T0836_Task_SL" bioc:stroke="#205022" bioc:fill="#c8e6c9" color:background-color="#c8e6c9" color:border-color="#205022">
+        <dc:Bounds x="194" y="404" width="140" height="70" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DataObjectRef_SL_T0836_Task_SL_di" bpmnElement="DataObjectRef_SL_T0836_Task_SL">
+        <dc:Bounds x="246" y="461" width="36" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="222" y="511" width="84" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_017gyo9_di" bpmnElement="Flow_017gyo9">
+        <di:waypoint x="390" y="297" />
+        <di:waypoint x="390" y="370" />
+        <di:waypoint x="439" y="370" />
+        <di:waypoint x="439" y="404" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_117av7h_di" bpmnElement="Flow_117av7h">
+        <di:waypoint x="334" y="262" />
+        <di:waypoint x="369" y="262" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0td1hji_di" bpmnElement="Flow_0td1hji">
+        <di:waypoint x="369" y="439" />
+        <di:waypoint x="334" y="439" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Sub_T0835_di" bpmnElement="Sub_T0835" isExpanded="true">
+        <dc:Bounds x="594" y="190" width="355" height="360" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T0835_Task_PI_di" bpmnElement="T0835_Task_PI" bioc:stroke="#6b3c00" bioc:fill="#ffe0b2" color:background-color="#ffe0b2" color:border-color="#6b3c00">
+        <dc:Bounds x="614" y="225" width="140" height="70" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T0835_Task_PO_di" bpmnElement="T0835_Task_PO" bioc:stroke="#6b3c00" bioc:fill="#ffe0b2" color:background-color="#ffe0b2" color:border-color="#6b3c00">
+        <dc:Bounds x="789" y="225" width="140" height="70" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DataObjectRef_PI_T0835_Task_PI_di" bpmnElement="DataObjectRef_PI_T0835_Task_PI">
+        <dc:Bounds x="666" y="285" width="36" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="639" y="335" width="90" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DataObjectRef_PO_T0835_Task_PO_di" bpmnElement="DataObjectRef_PO_T0835_Task_PO">
+        <dc:Bounds x="841" y="285" width="36" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="814" y="335" width="90" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T0835_Task_MNPS_di" bpmnElement="T0835_Task_MNPS" bioc:stroke="#6b3c00" bioc:fill="#ffe0b2" color:background-color="#ffe0b2" color:border-color="#6b3c00">
+        <dc:Bounds x="789" y="405" width="140" height="70" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DataObjectRef_MN_T0835_Task_MNPS_di" bpmnElement="DataObjectRef_MN_T0835_Task_MNPS">
+        <dc:Bounds x="886" y="465" width="36" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="863" y="515" width="84" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DataObjectRef_PS_T0835_Task_MNPS_di" bpmnElement="DataObjectRef_PS_T0835_Task_MNPS">
+        <dc:Bounds x="796" y="465" width="36" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="772" y="515" width="84" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T0835_Task_PR_di" bpmnElement="T0835_Task_PR" bioc:stroke="#205022" bioc:fill="#c8e6c9" color:background-color="#c8e6c9" color:border-color="#205022">
+        <dc:Bounds x="614" y="405" width="140" height="70" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DataObjectRef_PR_T0835_Task_PR_di" bpmnElement="DataObjectRef_PR_T0835_Task_PR">
+        <dc:Bounds x="670" y="465" width="36" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="644" y="515" width="90" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1xnpzb8_di" bpmnElement="Flow_1xnpzb8">
+        <di:waypoint x="754" y="260" />
+        <di:waypoint x="789" y="260" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_04o6lud_di" bpmnElement="Flow_04o6lud">
+        <di:waypoint x="804" y="295" />
+        <di:waypoint x="804" y="370" />
+        <di:waypoint x="859" y="370" />
+        <di:waypoint x="859" y="405" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_17eqvkv_di" bpmnElement="Flow_17eqvkv">
+        <di:waypoint x="789" y="440" />
+        <di:waypoint x="754" y="440" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Start_To_T0836_di" bpmnElement="Flow_Start_To_T0836">
+        <di:waypoint x="370" y="168" />
+        <di:waypoint x="370" y="190" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0qfvlw9_di" bpmnElement="Flow_0qfvlw9">
+        <di:waypoint x="772" y="835" />
+        <di:waypoint x="772" y="870" />
+        <di:waypoint x="480" y="870" />
+        <di:waypoint x="480" y="745" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_185crx8_di" bpmnElement="Flow_185crx8">
+        <di:waypoint x="455" y="720" />
+        <di:waypoint x="310" y="720" />
+        <di:waypoint x="310" y="670" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="311" y="693" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0mfjryx_di" bpmnElement="Flow_0mfjryx">
+        <di:waypoint x="455" y="720" />
+        <di:waypoint x="310" y="720" />
+        <di:waypoint x="310" y="780" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="312" y="733" width="15" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1h0wjlv_di" bpmnElement="Flow_1h0wjlv">
+        <di:waypoint x="230" y="630" />
+        <di:waypoint x="180" y="630" />
+        <di:waypoint x="180" y="720" />
+        <di:waypoint x="202" y="720" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1eah4mi_di" bpmnElement="Flow_1eah4mi">
+        <di:waypoint x="310" y="860" />
+        <di:waypoint x="310" y="890" />
+        <di:waypoint x="238" y="890" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1qbxz07_di" bpmnElement="Flow_1qbxz07">
+        <di:waypoint x="772" y="550" />
+        <di:waypoint x="772" y="585" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_14up8e9_di" bpmnElement="Flow_14up8e9">
+        <di:waypoint x="797" y="610" />
+        <di:waypoint x="880" y="610" />
+        <di:waypoint x="880" y="680" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ofprgs_di" bpmnElement="Flow_0ofprgs">
+        <di:waypoint x="747" y="610" />
+        <di:waypoint x="642" y="610" />
+        <di:waypoint x="642" y="680" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0tpbgff_di" bpmnElement="Flow_0tpbgff">
+        <di:waypoint x="880" y="760" />
+        <di:waypoint x="880" y="810" />
+        <di:waypoint x="797" y="810" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0xm4tna_di" bpmnElement="Flow_0xm4tna">
+        <di:waypoint x="642" y="760" />
+        <di:waypoint x="642" y="810" />
+        <di:waypoint x="747" y="810" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_16ir18g_di" bpmnElement="Flow_16ir18g">
+        <di:waypoint x="550" y="370" />
+        <di:waypoint x="594" y="370" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Annot_Ref_di" bpmnElement="Annot_Ref">
+        <dc:Bounds x="180" y="940" width="760" height="26" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>

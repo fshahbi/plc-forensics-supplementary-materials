@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+If you use this repository, please cite the thesis.
+title: "A PLC-centric Digital Forensic Readiness Framework for Industrial Control Systems"
+authors:
+  - family-names: Shahbi
+    given-names: Feras
+year: 2025
+type: thesis
+institution: University of Bristol
+repository-code: https://github.com/fshahbi/plc-forensics-supplementary-materials

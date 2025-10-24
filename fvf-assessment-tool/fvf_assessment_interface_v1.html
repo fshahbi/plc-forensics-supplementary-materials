@@ -1,0 +1,1964 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PLC Forensic Value Function (FVF) — Thesis‑Aligned (Heatmap Integrated)</title>
+<link rel="icon" href="data:,">
+<style>
+  :root {
+    --accent: #0b6bcb;
+    --soft: #e9f0fa;
+    --muted: #6b7280;
+    --choice-bg: #ede9fe;
+    --choice-bd: #7c3aed;
+    --success: #059669;
+    --warning: #d97706;
+    --error: #dc2626;
+    --info: #0284c7;
+    --surface: #fff;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, Helvetica, Arial, sans-serif; margin: 0; line-height: 1.45; color: #111827; background: #f8fafc; }
+  header { padding: 24px 20px 12px; border-bottom: 2px solid #e5e7eb; background: var(--surface); position: sticky; top: 0; z-index: 10; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  header h1 { margin: 0 0 8px 0; font-size: 24px; font-weight: 600; letter-spacing: -0.02em; }
+  header p { margin: 0; color: var(--muted); font-size: 14px; }
+  main { padding: 20px; max-width: 1400px; margin: 0 auto; }
+  section.card { border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; margin-bottom: 20px; background: var(--surface); box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: box-shadow 0.15s ease; }
+  section.card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+  section.card h2 { margin: 0 0 16px; font-size: 20px; font-weight: 600; color: #1f2937; display: flex; align-items: center; gap: 8px; }
+  section.card h3 { font-size: 16px; margin: 16px 0 12px; font-weight: 600; color: #374151; display: flex; align-items: center; gap: 8px; }
+
+  .preset-card { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-color: #f59e0b; }
+  .preset-card h2 { color: #92400e; }
+  .preset-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-top: 16px; }
+  .preset-item { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px; transition: all 0.15s ease; }
+  .preset-item:hover { border-color: var(--choice-bd); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+  .preset-item h4 { margin: 0 0 8px; font-size: 16px; font-weight: 600; color: #1f2937; }
+  .preset-item p { margin: 0 0 12px; font-size: 13px; color: #6b7280; line-height: 1.4; }
+  .preset-targets { background: #f8fafc; padding: 8px 12px; border-radius: 6px; margin: 8px 0 12px; font-size: 12px; color: #374151; font-family: 'Courier New', monospace; }
+  .btnbar { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+  button { background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 10px 14px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.15s ease; }
+  button:hover { background: #0a5db3; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+  button.ghost { background: #fff; color: #374151; border: 1px solid #d1d5db; }
+  button.ghost:hover { background: #f9fafb; border-color: #9ca3af; }
+  button.warn { background: #dc2626; color: white; }
+  button.warn:hover { background: #b91c1c; }
+  button.preset { background: #f59e0b; color: #fff; flex: 1; }
+  button.preset:hover { background: #d97706; }
+
+  .row { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; align-items: start; }
+  .field { display: flex; flex-direction: column; gap: 6px; position: relative; }
+  .field label { font-size: 13px; font-weight: 500; color: #374151; display: flex; align-items: center; gap: 6px; }
+  .field input[type="number"], .field input[type="text"], .field select { padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; transition: all 0.15s ease; }
+  .field input:focus, .field select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(11, 107, 203, 0.1); }
+  .hint { color: var(--muted); font-size: 12px; margin-top: 4px; }
+
+  .tri { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .tri label { display: flex; align-items: center; gap: 8px; border: 1px solid #d1d5db; padding: 8px 16px; border-radius: 8px; cursor: pointer; user-select: none; background: #fff; transition: all 0.15s ease; font-size: 13px; font-weight: 500; min-width: 60px; justify-content: center; }
+  .tri input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .tri label:hover { border-color: var(--choice-bd); background: #f8fafc; transform: translateY(-1px); }
+  .tri label:has(input:checked) { background: var(--choice-bg); border-color: var(--choice-bd); box-shadow: 0 0 0 2px rgba(124,58,237,.15); color: var(--choice-bd); font-weight: 600; }
+
+  /* Tooltip style (borrowed) */
+  .tooltip { position: relative; display: inline-flex; align-items: center; cursor: help; }
+  .tooltip-trigger { width: 16px; height: 16px; background: var(--info); color: #fff; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; margin-left: 4px; }
+  .tooltip-content { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: #1f2937; color: #fff; padding: 12px 16px; border-radius: 8px; font-size: 12px; line-height: 1.4; width: 300px; z-index: 1000; opacity: 0; visibility: hidden; transition: all .15s ease; box-shadow: 0 4px 12px rgba(0,0,0,.15); }
+  .tooltip-content::after { content:''; position: absolute; top:100%; left:50%; transform: translateX(-50%); border:6px solid transparent; border-top-color:#1f2937; }
+  .tooltip:hover .tooltip-content { opacity:1; visibility:visible; }
+  .tooltip-content h5 { margin:0 0 8px; font-size:13px; font-weight:600; color:#fbbf24; }
+  .tooltip-content ul { margin:4px 0; padding-left:16px; }
+  .tooltip-content li { margin:2px 0; }
+
+  /* KPI/VA cards */
+  .outgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+  .kpi { border-radius:12px; padding:16px; border:1px solid #e5e7eb; background:#fff; text-align:center; transition: all .15s ease; }
+  .kpi:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.08); }
+  .kpi h4 { margin:0 0 8px; font-size:12px; color:#6b7280; font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
+  .kpi .big { font-size:28px; font-variant-numeric: tabular-nums; font-weight:700; color:#1f2937; }
+  .kpi.excellent { background: linear-gradient(135deg,#ecfdf5 0%,#d1fae5 100%); border-color:#10b981; }
+  .kpi.good { background: linear-gradient(135deg,#f0f9ff 0%,#e0f2fe 100%); border-color:#0284c7; }
+  .kpi.moderate { background: linear-gradient(135deg,#fef3c7 0%,#fde68a 100%); border-color:#f59e0b; }
+  .kpi.poor { background: linear-gradient(135deg,#fee2e2 0%,#fecaca 100%); border-color:#ef4444; }
+  .va-card { background: linear-gradient(180deg,#fff7cc,#fde68a); border:2px solid #f59e0b; border-radius:12px; text-align:center; padding:18px; }
+  .va-card h5 { margin:0; font-size:12px; letter-spacing:.7px; color:#8a4b00; display:flex; align-items:center; justify-content:center; gap:6px; }
+  .va-card .val { font-size:30px; font-weight:800; color:#8a4b00; margin-top:6px; }
+
+  /* Comparison table */
+  .toolbar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top: 8px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; margin-top: 16px; }
+  th, td { border: 1px solid #e5e7eb; padding: 10px 12px; text-align: left; }
+  th { background: #f8fafc; font-weight: 600; color: #374151; }
+  tr:nth-child(even) { background: #fafbfc; }
+  tr:hover { background: #f0f9ff; }
+  .value-cell { font-weight: 600; text-align: center; }
+
+  /* Validation message styles */
+  .validation-message { font-size: 12px; margin-top: 4px; padding: 6px 8px; border-radius: 6px; display: none; }
+  .vm-error   { display:block; background:#fee2e2; color:#991b1b; border:1px solid #ef4444; }
+  .vm-warn    { display:block; background:#fef3c7; color:#92400e; border:1px solid #f59e0b; }
+  .vm-info    { display:block; background:#dbeafe; color:#1e40af; border:1px solid #3b82f6; }
+  .muted { color: var(--muted); font-size: 12px; }
+
+  /* Confidence progress (tiny) */
+  .conf-wrap { display:flex; align-items:center; justify-content:center; gap:8px; margin-top: 8px; }
+  .conf-bar { width: 260px; height: 8px; background:#e5e7eb; border-radius: 999px; overflow: hidden; border: 1px solid #d1d5db; }
+  .conf-fill { height: 100%; width: 0%; background: var(--accent); transition: width .25s ease; }
+
+  /* === Heatmap modal (prefixed hm- to avoid collisions) === */
+  .hm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 9999; display: none; align-items: center; justify-content: center; }
+  .hm-dialog { width: min(1100px, 96vw); max-height: 92vh; overflow: auto; background: #fff; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.25); border: 1px solid #e5e7eb; }
+  .hm-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid #e5e7eb; background: linear-gradient(135deg, #1f2937 0%, #374151 100%); color: #fff; }
+  .hm-title { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: .2px; }
+  .hm-actions { display: flex; gap: 8px; align-items: center; }
+  .hm-actions button { background: #0b6bcb; border: none; color: #fff; padding: 8px 10px; border-radius: 8px; font-size: 12px; }
+  .hm-actions .close { background: #6b7280; }
+  .hm-body { padding: 16px; }
+
+  /* Borrowed palette/structure from demo (prefixed) */
+  .hm-legend { display:flex; justify-content:center; gap:16px; margin: 8px 0 20px; flex-wrap: wrap; }
+  .hm-legend-item { display:flex; align-items:center; gap:8px; padding:8px 12px; border-radius:8px; background:#f8fafc; border:1px solid #e5e7eb; font-weight:500; }
+  .hm-legend-color { width:18px; height:18px; border-radius:4px; border:1px solid rgba(0,0,0,0.1); }
+  .hm-grid { display:grid; grid-template-columns: 220px repeat(4, 1fr); }
+  .hm-header-cell { background:#f8fafc; border-bottom: 2px solid #e5e7eb; border-right: 1px solid #e5e7eb; padding: 12px; font-weight: 700; text-align:center; font-size: 13px; color:#1f2937; }
+  .hm-header-cell:first-child { background:#f1f5f9; text-align:left; font-size: 14px; }
+  .hm-row-header { background:#f8fafc; border-right: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; padding: 12px; font-weight: 600; font-size: 13px; display:flex; flex-direction:column; gap:2px; }
+  .hm-artifact { font-weight:700; color:#1f2937; }
+  .hm-sub { font-size:11px; color:#6b7280; }
+
+  .hm-cell { border-right: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; padding: 14px 10px; text-align:center; font-weight:700; font-size:16px; color:#fff; position:relative; transition: all .2s ease; cursor: pointer; }
+  .hm-cell:hover { transform: scale(1.04); z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,.2); border-radius: 4px; }
+  .hm-cell-critical { background: #dc2626; }
+  .hm-cell-low      { background: #f59e0b; }
+  .hm-cell-moderate { background: #0284c7; }
+  .hm-cell-high     { background: #059669; }
+
+  .hm-tooltip { position: absolute; background: rgba(0,0,0,0.9); color:#fff; padding: 8px 10px; border-radius: 4px; font-size: 12px; white-space: nowrap; z-index: 1000; opacity: 0; pointer-events:none; transition: opacity .2s ease; top:-40px; left:50%; transform: translateX(-50%); }
+  .hm-cell:hover .hm-tooltip { opacity: 1; }
+
+  @media (max-width: 900px) {
+    .hm-grid { grid-template-columns: 160px repeat(4, 1fr); }
+    .hm-cell { font-size: 14px; padding: 10px 8px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>🔍 Interactive PLC Forensic Value Function (FVF) Assessment Interface</h1>
+  <p>Thesis‑aligned formulas (Chapter 5), with comprehensive tooltips, entry validation, confidence scoring, and heatmap visualization.</p>
+</header>
+
+<main>
+
+  <!-- Presets -->
+  <section class="card preset-card">
+    <h2>🎯 Thesis Worked Examples 
+      <span class="tooltip"><span class="tooltip-trigger">i</span>
+        <span class="tooltip-content">
+          <h5>Presets</h5>
+          Load parameter sets from §5.4.3.4 (S7‑1214SP) to reproduce the published exemplars. 
+          Presets also set the artefact type and label. You can still adjust any parameter afterwards.
+        </span>
+      </span>
+    </h2>
+    <div class="preset-grid">
+      <div class="preset-item">
+        <h4>Firmware (S7‑1214SP)</h4>
+        <p>Non‑volatile PLC firmware with write protection and intrinsic integrity checks.</p>
+        <div class="preset-targets">DI≈0.178, DV≈0.046, EX≈0.667 → V(A)≈0.186</div>
+        <div class="btnbar">
+          <button class="preset" onclick="loadFirmwarePreset()">Load Preset</button>
+          <button class="ghost" onclick="addToComparison('Firmware (S7‑1214SP)')">Add to Comparison</button>
+        </div>
+      </div>
+      <div class="preset-item">
+        <h4>Control Program</h4>
+        <p>User logic stored in flash memory; updated periodically.</p>
+        <div class="preset-targets">DI≈0.345, DV≈0.244, EX≈0.267 → V(A)≈0.441</div>
+        <div class="btnbar">
+          <button class="preset" onclick="loadControlProgramPreset()">Load Preset</button>
+          <button class="ghost" onclick="addToComparison('Control Program')">Add to Comparison</button>
+        </div>
+      </div>
+      <div class="preset-item">
+        <h4>PLC Status Logs</h4>
+        <p>Event‑triggered diagnostics with circular overwrite.</p>
+        <div class="preset-targets">DI≈0.131, DV=0.540, EX=0.200 → V(A)≈0.490</div>
+        <div class="btnbar">
+          <button class="preset" onclick="loadStatusLogsPreset()">Load Preset</button>
+          <button class="ghost" onclick="addToComparison('PLC Status Logs')">Add to Comparison</button>
+        </div>
+      </div>
+      <div class="preset-item">
+        <h4>Measurement Values</h4>
+        <p>High‑frequency sensor values in volatile RAM.</p>
+        <div class="preset-targets">DI≈0.125, DV≈0.999, EX≈0.467 → V(A)≈0.553</div>
+        <div class="btnbar">
+          <button class="preset" onclick="loadMeasurementValuesPreset()">Load Preset</button>
+          <button class="ghost" onclick="addToComparison('Measurement Values')">Add to Comparison</button>
+        </div>
+      </div>
+    </div>
+    <div class="btnbar">
+      <button class="ghost" onclick="resetToBlank()">Reset to Blank</button>
+    </div>
+  </section>
+
+  <!-- Artefact & Analysis Configuration -->
+  <section class="card" id="meta">
+    <h2>Artefact & Analysis Configuration</h2>
+    <div class="row">
+      <div class="field" style="grid-column: span 6;">
+        <label>
+          Artefact Type
+          <span class="tooltip"><span class="tooltip-trigger">i</span>
+            <span class="tooltip-content">
+              <h5>Artefact Selection Guide</h5>
+              <ul>
+                <li><strong>PLC OS:</strong> Core system components (firmware, bootloader)</li>
+                <li><strong>User Logic:</strong> Application-specific control programs</li>
+                <li><strong>Process Data:</strong> Real-time operational values</li>
+                <li><strong>Diagnostics:</strong> System logs and error records</li>
+              </ul>
+              Select the category that best matches your target data source.
+            </span>
+          </span>
+        </label>
+        <select id="artefactSelect">
+          <option value="">— Select artefact type —</option>
+          <optgroup label="PLC OS"><option>Firmware</option><option>Bootloader</option></optgroup>
+          <optgroup label="User Control Logic"><option>Control Program</option><option>Logic Meta Data</option><option>Tag Names & Addresses</option><option>User‑Defined Data Types</option></optgroup>
+          <optgroup label="Diagnostics & Logs"><option>PLC Status Logs</option><option>Error Events</option><option>User‑Defined Events</option></optgroup>
+          <optgroup label="Process Data"><option>Measurement Values</option><option>Process Output Values</option><option>Process Reporting Values</option></optgroup>
+          <optgroup label="Program/Memory State"><option>Program State Values</option><option>Retentive Memory Bit Values</option><option>Non‑Retentive Memory Bit Values</option></optgroup>
+          <option value="__custom__">Custom…</option>
+        </select>
+      </div>
+      <div class="field" id="customField" style="grid-column: span 6; display:none;">
+        <label>Custom Artefact Name</label>
+        <input id="artefactCustom" type="text" placeholder="Enter custom artefact type">
+      </div>
+      <div class="field" style="grid-column: span 4;">
+        <label>Artefact Label (optional)</label>
+        <input id="artefactName" type="text" placeholder="e.g., Firmware v2.1.3">
+      </div>
+      <div class="field" style="grid-column: span 4;">
+        <label>Analyst</label>
+        <input id="analyst" type="text" placeholder="Analyst name">
+      </div>
+      <div class="field" style="grid-column: span 4;">
+        <label>
+          Reference Window T<sub>calc</sub> (hours)
+          <span class="tooltip"><span class="tooltip-trigger">i</span>
+            <span class="tooltip-content">
+              <h5>Reference Window</h5>
+              <ul>
+                <li><strong>8760 (1yr):</strong> Default for thesis exemplars</li>
+                <li><strong>720 (1mo):</strong> Short-term analysis</li>
+                <li><strong>168 (1wk):</strong> Incident response</li>
+              </ul>
+              Use the same T<sub>calc</sub> for artefacts you want to compare.
+            </span>
+          </span>
+        </label>
+        <input id="windowHours" type="number" step="1" min="1" value="8760">
+        <div class="hint">This is synchronized with the volatility panel.</div>
+        <div id="val_windowHours" class="validation-message"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Data Integrity -->
+  <section class="card" id="integrity">
+    <h2>1) Data Integrity D<sub>I</sub>(A)
+      <span class="tooltip"><span class="tooltip-trigger">i</span>
+        <span class="tooltip-content">
+          <h5>Data Integrity</h5>R (intrinsic protections), M (operational measures), T (attestation). 
+          Factor score = #Yes / #Applicable. Gate: MT‑1=No → T=0.
+        </span>
+      </span>
+    </h2>
+
+    <!-- R -->
+    <h3>R — Resistance to Tampering</h3>
+    <div class="row">
+      <div class="field" style="grid-column: span 4;">
+        <label>R‑M1 Write‑protected storage <span class="tooltip"><span class="tooltip-trigger">i</span><span class="tooltip-content">
+<h5>Assessment Guide:</h5>
+<ul>
+  <li><strong>Yes:</strong> ROM, EEPROM with write-protect jumpers, locked flash memory</li>
+  <li><strong>No:</strong> Standard RAM, unlocked flash, writable storage</li>
+  <li><strong>N/A:</strong> Protection mechanism not applicable to this artefact</li>
+</ul>
+<h5>Common Examples:</h5>
+<ul>
+  <li>Hardware write-protect switches</li>
+  <li>Firmware-level write protection</li>
+  <li>Read-only memory regions</li>
+</ul>
+</span></span></label>
+        <div class="tri">
+          <label><input type="radio" name="r_m1" value="yes"> Yes</label>
+          <label><input type="radio" name="r_m1" value="no"> No</label>
+          <label><input type="radio" name="r_m1" value="na"> N/A</label>
+        </div>
+      </div>
+      <div class="field" style="grid-column: span 4;">
+        <label>R‑M2 Hardware memory protection <span class="tooltip"><span class="tooltip-trigger">i</span><span class="tooltip-content">
+<h5>Assessment Guide:</h5>
+<ul>
+  <li><strong>Yes:</strong> MMU/MPU protection, hardware access controls</li>
+  <li><strong>No:</strong> No hardware-level memory protection</li>
+  <li><strong>N/A:</strong> Hardware protection not relevant for this artefact</li>
+</ul>
+<h5>Examples:</h5>
+<ul>
+  <li>Memory Management Unit (MMU)</li>
+  <li>Memory Protection Unit (MPU)</li>
+  <li>Hardware access control lists</li>
+</ul>
+</span></span></label>
+        <div class="tri">
+          <label><input type="radio" name="r_m2" value="yes"> Yes</label>
+          <label><input type="radio" name="r_m2" value="no"> No</label>
+          <label><input type="radio" name="r_m2" value="na"> N/A</label>
+        </div>
+      </div>
+      <div class="field" style="grid-column: span 4;">
+        <label>R‑M3 Intrinsic integrity checks <span class="tooltip"><span class="tooltip-trigger">i</span><span class="tooltip-content">
+<h5>Assessment Guide:</h5>
+<ul>
+  <li><strong>Yes:</strong> Built-in CRC, checksums, hash verification</li>
+  <li><strong>No:</strong> No built-in integrity verification</li>
+  <li><strong>N/A:</strong> Integrity checks not applicable</li>
+</ul>
+<h5>Examples:</h5>
+<ul>
+  <li>Cyclic Redundancy Check (CRC)</li>
+  <li>SHA hash verification</li>
+  <li>Built-in checksum validation</li>
+</ul>
+</span></span></label>
+        <div class="tri">
+          <label><input type="radio" name="r_m3" value="yes"> Yes</label>
+          <label><input type="radio" name="r_m3" value="no"> No</label>
+          <label><input type="radio" name="r_m3" value="na"> N/A</label>
+        </div>
+      </div>
+
+      <div class="field" style="grid-column: span 4;">
+        <label>R‑M4 Cryptographic transport protection <span class="tooltip"><span class="tooltip-trigger">i</span><span class="tooltip-content">
+<h5>Assessment Guide:</h5>
+<ul>
+  <li><strong>Yes:</strong> TLS/SSL, encrypted protocols, secure channels</li>
+  <li><strong>No:</strong> Plain-text transmission, unencrypted protocols</li>
+  <li><strong>N/A:</strong> No network transmission involved</li>
+</ul>
+<h5>Examples:</h5>
+<ul>
+  <li>HTTPS/TLS for web interfaces</li>
+  <li>Encrypted industrial protocols</li>
+  <li>VPN tunnels for data transfer</li>
+</ul>
+</span></span></label>
+        <div class="tri">
+          <label><input type="radio" name="r_m4" value="yes"> Yes</label>
+          <label><input type="radio" name="r_m4" value="no"> No</label>
+          <label><input type="radio" name="r_m4" value="na"> N/A</label>
+        </div>
+      </div>
+
+      <div class="field" style="grid-column: span 4;">
+        <label>R‑M5 Signature verification <span class="tooltip"><span class="tooltip-trigger">i</span><span class="tooltip-content">
+<h5>Assessment Guide:</h5>
+<ul>
+  <li><strong>Yes:</strong> Digital signatures, code signing, cryptographic verification</li>
+  <li><strong>No:</strong> No signature verification mechanisms</li>
+  <li><strong>N/A:</strong> Signatures not applicable to this artefact</li>
+</ul>
+<h5>Examples:</h5>
+<ul>
+  <li>Code signing certificates</li>
+  <li>Digital signature validation</li>
+  <li>PKI-based verification</li>
+</ul>
+</span></span></label>
+        <div class="tri">
+          <label><input type="radio" name="r_m5" value="yes"> Yes</label>
+          <label><input type="radio" name="r_m5" value="no"> No</label>
+          <label><input type="radio" name="r_m5" value="na"> N/A</label>
+        </div>
+      </div>
+
+      <div class="field" style="grid-column: span 4;">
+        <label>R‑M6 Secure boot chain <span class="tooltip"><span class="tooltip-trigger">i</span><span class="tooltip-content">
+<h5>Assessment Guide:</h5>
+<ul>
+  <li><strong>Yes:</strong> Verified boot process, chain-of-trust validation</li>
+  <li><strong>No:</strong> Standard boot process without verification</li>
+  <li><strong>N/A:</strong> Boot process not relevant to this artefact</li>
+</ul>
+<h5>Examples:</h5>
+<ul>
+  <li>UEFI Secure Boot</li>
+  <li>Trusted Platform Module (TPM)</li>
+  <li>Hardware Security Module (HSM)</li>
+</ul>
+</span></span></label>
+        <div class="tri">
+          <label><input type="radio" name="r_m6" value="yes"> Yes</label>
+          <label><input type="radio" name="r_m6" value="no"> No</label>
+          <label><input type="radio" name="r_m6" value="na"> N/A</label>
+        </div>
+      </div>
+
+      <div class="field" style="grid-column: span 4;">
+        <label>R‑M7 Tamper‑evident logging <span class="tooltip"><span class="tooltip-trigger">i</span><span class="tooltip-content">
+<h5>Assessment Guide:</h5>
+<ul>
+  <li><strong>Yes:</strong> Immutable logs, blockchain logging, tamper-evident storage</li>
+  <li><strong>No:</strong> Standard logging without tamper protection</li>
+  <li><strong>N/A:</strong> Logging not applicable to this artefact</li>
+</ul>
+<h5>Examples:</h5>
+<ul>
+  <li>Write-once audit logs</li>
+  <li>Cryptographically sealed logs</li>
+  <li>Distributed ledger logging</li>
+</ul>
+</span></span></label>
+        <div class="tri">
+          <label><input type="radio" name="r_m7" value="yes"> Yes</label>
+          <label><input type="radio" name="r_m7" value="no"> No</label>
+          <label><input type="radio" name="r_m7" value="na"> N/A</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- M -->
+    <h3>M — Integrity Enhancement Measures</h3>
+    <div class="row">
+      <div class="field" style="grid-column: span 4;">
+        <label>M‑M1 Unauthorized change alerts <span class="tooltip"><span class="tooltip-trigger">i</span><span class="tooltip-content">
+<h5>Assessment Guide:</h5>
+<ul>
+  <li><strong>Yes:</strong> Automated alerts for unauthorized modifications</li>
+  <li><strong>No:</strong> No change detection or alerting</li>
+  <li><strong>N/A:</strong> Change alerting not applicable</li>
+</ul>
+<h5>Examples:</h5>
+<ul>
+  <li>File integrity monitoring (FIM)</li>
+  <li>Configuration change alerts</li>
+  <li>Unauthorized access notifications</li>
+</ul>
+</span></span></label>
+        <div class="tri">
+          <label><input type="radio" name="m_m1" value="yes"> Yes</label>
+          <label><input type="radio" name="m_m1" value="no"> No</label>
+          <label><input type="radio" name="m_m1" value="na"> N/A</label>
+        </div>
+      </div>
+      <div class="field" style="grid-column: span 4;">
+        <label>M‑M2 Baseline comparison copies <span class="tooltip"><span class="tooltip-trigger">i</span><span class="tooltip-content">
+<h5>Assessment Guide:</h5>
+<ul>
+  <li><strong>Yes:</strong> Pristine baseline copies maintained for comparison</li>
+  <li><strong>No:</strong> No baseline copies available</li>
+  <li><strong>N/A:</strong> Baseline comparison not applicable</li>
+</ul>
+<h5>Examples:</h5>
+<ul>
+  <li>Golden master images</li>
+  <li>Reference configuration files</li>
+  <li>Known-good software versions</li>
+</ul>
+</span></span></label>
+        <div class="tri">
+          <label><input type="radio" name="m_m2" value="yes"> Yes</label>
+          <label><input type="radio" name="m_m2" value="no"> No</label>
+          <label><input type="radio" name="m_m2" value="na"> N/A</label>
+        </div>
+      </div>
+      <div class="field" style="grid-column: span 4;">
+        <label>M‑M3 Trusted timestamps <span class="tooltip"><span class="tooltip-trigger">i</span><span class="tooltip-content">
+<h5>Assessment Guide:</h5>
+<ul>
+  <li><strong>Yes:</strong> Cryptographically signed timestamps recorded</li>
+  <li><strong>No:</strong> No trusted timestamping</li>
+  <li><strong>N/A:</strong> Timestamping not applicable</li>
+</ul>
+<h5>Examples:</h5>
+<ul>
+  <li>RFC 3161 timestamp servers</li>
+  <li>Hardware security module timestamps</li>
+  <li>Blockchain-based timestamping</li>
+</ul>
+</span></span></label>
+        <div class="tri">
+          <label><input type="radio" name="m_m3" value="yes"> Yes</label>
+          <label><input type="radio" name="m_m3" value="no"> No</label>
+          <label><input type="radio" name="m_m3" value="na"> N/A</label>
+        </div>
+      </div>
+
+      <div class="field" style="grid-column: span 4;">
+        <label>M‑M4 Time synchronization <span class="tooltip"><span class="tooltip-trigger">i</span><span class="tooltip-content">
+<h5>Assessment Guide:</h5>
+<ul>
+  <li><strong>Yes:</strong> Enforced time sync (NTP/PTP) for accuracy</li>
+  <li><strong>No:</strong> No time synchronization</li>
+  <li><strong>N/A:</strong> Time sync not applicable</li>
+</ul>
+<h5>Examples:</h5>
+<ul>
+  <li>Network Time Protocol (NTP)</li>
+  <li>Precision Time Protocol (PTP)</li>
+  <li>GPS time synchronization</li>
+</ul>
+</span></span></label>
+        <div class="tri">
+          <label><input type="radio" name="m_m4" value="yes"> Yes</label>
+          <label><input type="radio" name="m_m4" value="no"> No</label>
+          <label><input type="radio" name="m_m4" value="na"> N/A</label>
+        </div>
+      </div>
+      <div class="field" style="grid-column: span 4;">
+        <label>M‑M5 Chain of custody logging <span class="tooltip"><span class="tooltip-trigger">i</span><span class="tooltip-content">
+<h5>Assessment Guide:</h5>
+<ul>
+  <li><strong>Yes:</strong> Post-extraction access logging maintained</li>
+  <li><strong>No:</strong> No chain of custody tracking</li>
+  <li><strong>N/A:</strong> Chain of custody not applicable</li>
+</ul>
+<h5>Examples:</h5>
+<ul>
+  <li>Access audit trails</li>
+  <li>Forensic evidence tracking</li>
+  <li>Digital chain of custody systems</li>
+</ul>
+</span></span></label>
+        <div class="tri">
+          <label><input type="radio" name="m_m5" value="yes"> Yes</label>
+          <label><input type="radio" name="m_m5" value="no"> No</label>
+          <label><input type="radio" name="m_m5" value="na"> N/A</label>
+        </div>
+      </div>
+      <div class="field" style="grid-column: span 4;">
+        <label>M‑M6 Change management enforcement <span class="tooltip"><span class="tooltip-trigger">i</span><span class="tooltip-content">
+<h5>Assessment Guide:</h5>
+<ul>
+  <li><strong>Yes:</strong> Change approval and access controls enforced</li>
+  <li><strong>No:</strong> No access control enforcement</li>
+  <li><strong>N/A:</strong> Access controls not applicable</li>
+</ul>
+<h5>Examples:</h5>
+<ul>
+  <li>Role-based access control (RBAC)</li>
+  <li>Multi-factor authentication</li>
+  <li>Change approval workflows</li>
+</ul>
+</span></span></label>
+        <div class="tri">
+          <label><input type="radio" name="m_m6" value="yes"> Yes</label>
+          <label><input type="radio" name="m_m6" value="no"> No</label>
+          <label><input type="radio" name="m_m6" value="na"> N/A</label>
+        </div>
+      </div>
+      <div class="field" style="grid-column: span 4;">
+        <label>M‑M7 Long‑retention snapshots <span class="tooltip"><span class="tooltip-trigger">i</span><span class="tooltip-content">
+<h5>Assessment Guide:</h5>
+<ul>
+  <li><strong>Yes:</strong> Cryptographically signed long-term snapshots</li>
+  <li><strong>No:</strong> No long-term snapshot retention</li>
+  <li><strong>N/A:</strong> Snapshots not applicable</li>
+</ul>
+<h5>Examples:</h5>
+<ul>
+  <li>Signed system snapshots</li>
+  <li>Configuration backups</li>
+  <li>Versioned state captures</li>
+</ul>
+</span></span></label>
+        <div class="tri">
+          <label><input type="radio" name="m_m7" value="yes"> Yes</label>
+          <label><input type="radio" name="m_m7" value="no"> No</label>
+          <label><input type="radio" name="m_m7" value="na"> N/A</label>
+        </div>
+      </div>
+      <div class="field" style="grid-column: span 4;">
+        <label>M‑M8 Tamper‑resistant hash storage <span class="tooltip"><span class="tooltip-trigger">i</span><span class="tooltip-content">
+<h5>Assessment Guide:</h5>
+<ul>
+  <li><strong>Yes:</strong> Secure storage for hashes and manifests</li>
+  <li><strong>No:</strong> No secure hash storage</li>
+  <li><strong>N/A:</strong> Hash storage not applicable</li>
+</ul>
+<h5>Examples:</h5>
+<ul>
+  <li>Hardware security modules</li>
+  <li>Trusted platform modules</li>
+  <li>Secure key storage systems</li>
+</ul>
+</span></span></label>
+        <div class="tri">
+          <label><input type="radio" name="m_m8" value="yes"> Yes</label>
+          <label><input type="radio" name="m_m8" value="no"> No</label>
+          <label><input type="radio" name="m_m8" value="na"> N/A</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- T -->
+    <h3>T — Source Attestation (gate on MT‑1)</h3>
+    <div class="row">
+      <div class="field" style="grid-column: span 4;">
+        <label>MT‑1 Attestation baseline available (gate) <span class="tooltip"><span class="tooltip-trigger">i</span><span class="tooltip-content">
+<h5>Assessment Guide:</h5>
+<ul>
+  <li><strong>Yes:</strong> Hardware or software attestation capability available</li>
+  <li><strong>No:</strong> No attestation capability (sets T = 0)</li>
+</ul>
+<h5>Examples:</h5>
+<ul>
+  <li>TPM-based attestation</li>
+  <li>Remote attestation protocols</li>
+  <li>Hardware-based verification</li>
+</ul>
+<strong>Note:</strong> If No, all T metrics become irrelevant (T = 0).
+</span></span></label>
+        <div class="tri">
+          <label><input type="radio" name="t_m1" value="yes"> Yes</label>
+          <label><input type="radio" name="t_m1" value="no"> No</label>
+          <label><input type="radio" name="t_m1" value="na"> N/A</label>
+        </div>
+      </div>
+      <div class="field" style="grid-column: span 4;">
+        <label>MT‑2 Secure channel available <span class="tooltip"><span class="tooltip-trigger">i</span><span class="tooltip-content">
+<h5>Assessment Guide:</h5>
+<ul>
+  <li><strong>Yes:</strong> Attestation results transmitted over secure channel</li>
+  <li><strong>No:</strong> No secure channel for attestation</li>
+  <li><strong>N/A:</strong> Secure channel not applicable</li>
+</ul>
+<h5>Examples:</h5>
+<ul>
+  <li>TLS-encrypted attestation</li>
+  <li>VPN-protected channels</li>
+  <li>Hardware-secured communication</li>
+</ul>
+</span></span></label>
+        <div class="tri">
+          <label><input type="radio" name="t_m2" value="yes"> Yes</label>
+          <label><input type="radio" name="t_m2" value="no"> No</label>
+          <label><input type="radio" name="t_m2" value="na"> N/A</label>
+        </div>
+      </div>
+      <div class="field" style="grid-column: span 4;">
+        <label>MT‑3 Trusted baseline present <span class="tooltip"><span class="tooltip-trigger">i</span><span class="tooltip-content">
+<h5>Assessment Guide:</h5>
+<ul>
+  <li><strong>Yes:</strong> Verified against established trusted baseline</li>
+  <li><strong>No:</strong> No trusted baseline available</li>
+  <li><strong>N/A:</strong> Baseline comparison not applicable</li>
+</ul>
+<h5>Examples:</h5>
+<ul>
+  <li>Manufacturer-provided baselines</li>
+  <li>Cryptographically signed references</li>
+  <li>Known-good configuration states</li>
+</ul>
+</span></span></label>
+        <div class="tri">
+          <label><input type="radio" name="t_m3" value="yes"> Yes</label>
+          <label><input type="radio" name="t_m3" value="no"> No</label>
+          <label><input type="radio" name="t_m3" value="na"> N/A</label>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Data Volatility -->
+  <section class="card">
+    <h2>2) Data Volatility D<sub>V</sub>(A)</h2>
+
+    <h3>Change Frequency (CF) — Equation 5.5</h3>
+    <div class="row">
+      <div class="field" style="grid-column: span 4;">
+        <label>Observed Changes C (per hour) <span class="tooltip"><span class="tooltip-trigger">i</span><span class="tooltip-content">
+<h5>How to Determine:</h5>
+<ul>
+  <li>Count actual changes observed in the reference window</li>
+  <li>Include all modifications, updates, or alterations</li>
+  <li>Use same time units as T<sub>calc</sub></li>
+</ul>
+</span></span></label>
+        <input type="number" id="observed_changes" min="0" step="any" placeholder="0">
+        <div class="hint">Total changes observed in the defined time frame</div>
+        <div id="val_observed_changes" class="validation-message"></div>
+      </div>
+      <div class="field" style="grid-column: span 4;">
+        <label>Maximum Possible Changes C<sub>max</sub> (per hour) <span class="tooltip"><span class="tooltip-trigger">i</span><span class="tooltip-content">
+<h5>How to Determine:</h5>
+<ul>
+  <li>Theoretical maximum changes in same time frame</li>
+  <li>Consider technical constraints and update mechanisms</li>
+  <li>Must be ≥ observed changes</li>
+</ul>
+</span></span></label>
+        <input type="number" id="max_changes" min="0.000001" step="any" placeholder="1">
+        <div class="hint">Upper bound for plausible changes in the same window</div>
+        <div id="val_max_changes" class="validation-message"></div>
+      </div>
+      <div class="field" style="grid-column: span 4;">
+        <label>CF Result (calculated)</label>
+        <input type="text" id="cf_out" readonly value="0.000">
+        <div class="hint">CF = 1 − e<sup>−C/C<sub>max</sub></sup></div>
+      </div>
+    </div>
+
+    <h3>Retention Period (RP) — Equations 5.6–5.7</h3>
+    <div class="row">
+      <div class="field" style="grid-column: span 3;">
+        <label>Base Retention T<sub>ret</sub> (hours) <span class="tooltip"><span class="tooltip-trigger">i</span><span class="tooltip-content">
+<h5>Common Values:</h5>
+<ul>
+  <li><strong>Firmware:</strong> 43800 hours (5 years)</li>
+  <li><strong>Programs:</strong> 8760 hours (1 year)</li>
+  <li><strong>Process Data:</strong> 0.1 hours (6 minutes)</li>
+  <li><strong>Logs:</strong> 2000 hours (buffer dependent)</li>
+</ul>
+</span></span></label>
+        <input type="number" id="retention_time" min="0.01" step="any" placeholder="1">
+        <div class="hint">e.g., 43800 for 5‑year retention; 0.1 for ~6 minutes.</div>
+        <div id="val_retention_time" class="validation-message"></div>
+      </div>
+      <div class="field" style="grid-column: span 3;">
+        <label>Memory Factor F<sub>mem</sub> <span class="tooltip"><span class="tooltip-trigger">i</span><span class="tooltip-content">
+<h5>Memory Type Guidelines:</h5>
+<ul>
+  <li><strong>0.5:</strong> Volatile RAM (lost on power off)</li>
+  <li><strong>1.0:</strong> Battery-backed memory</li>
+  <li><strong>2.0:</strong> Non-volatile (EEPROM, Flash)</li>
+</ul>
+</span></span></label>
+        <input type="number" id="memory_factor" min="0.1" max="5" step="0.1" placeholder="1.0">
+        <div class="hint">0.5 volatile, 1.0 battery‑backed, 2.0 non‑volatile.</div>
+        <div id="val_memory_factor" class="validation-message"></div>
+      </div>
+      <div class="field" style="grid-column: span 3;">
+        <label>Backup Factor F<sub>backup</sub> <span class="tooltip"><span class="tooltip-trigger">i</span><span class="tooltip-content">
+<h5>Backup Strategy Guidelines:</h5>
+<ul>
+  <li><strong>0.5:</strong> No backup or forwarding</li>
+  <li><strong>1.0:</strong> Manual backup procedures</li>
+  <li><strong>2.0:</strong> Automated redundant backup</li>
+</ul>
+</span></span></label>
+        <input type="number" id="backup_factor" min="0.1" max="5" step="0.1" placeholder="1.0">
+        <div class="hint">0.5 none/overwrite, 1.0 manual, 2.0 automated.</div>
+        <div id="val_backup_factor" class="validation-message"></div>
+      </div>
+      <div class="field" style="grid-column: span 3;">
+        <label>RP Result (calculated)</label>
+        <input type="text" id="rp_out" readonly value="1.000">
+        <div class="hint">RP = 1 − 1/(1 + T<sub>ret,adj</sub>/T<sub>calc</sub>)</div>
+      </div>
+      <div class="field" style="grid-column: span 3;">
+        <label>Reference Window T<sub>calc</sub> (hours)</label>
+        <input type="number" id="reference_window" min="1" step="1" value="8760" placeholder="8760">
+        <div id="val_reference_window" class="validation-message"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Extraction Effort -->
+  <section class="card">
+    <h2>3) Extraction Effort E<sub>X</sub>(A)</h2>
+    <div class="row">
+      <div class="field" style="grid-column: span 4;">
+        <label>PLC Accessibility (PA) <span id="pa_score" class="hint" style="font-weight:700">0.0</span> <span class="tooltip"><span class="tooltip-trigger">i</span><span class="tooltip-content"><div style="max-height:340px; overflow:auto;">
+  <h5>PLC Accessibility (PA): Platform-/Legal-/Contractual Accessibility</h5>
+  <ul>
+    <li><strong>PA0:</strong> Fully reachable over network/VPN with administrative credentials; no third‑party permission needed.</li>
+    <li><strong>PA1:</strong> Investigator must be on site but can connect via local network/engineering station; credentials available, no vendor involvement.</li>
+    <li><strong>PA2:</strong> No network path; short local trip; direct cable/interface access permitted under organisation control.</li>
+    <li><strong>PA3:</strong> Air‑gapped/remote location requiring notable travel and coordination; access possible with scheduling/onsite staff.</li>
+    <li><strong>PA4:</strong> Very remote or legally/contractually restricted; vendor approval/escort or NDAs needed.</li>
+    <li><strong>PA5:</strong> Extreme remoteness or tightly restricted jurisdiction; access may require extraordinary logistics and legal compulsion.</li>
+  </ul>
+</div></span></span></label>
+        <div class="tri">
+  <label><input type="radio" name="pa_level" value="0.0"> PA0 – Full Remote (0.0)</label>
+  <label><input type="radio" name="pa_level" value="0.2"> PA1 – On‑Site Network (0.2)</label>
+  <label><input type="radio" name="pa_level" value="0.4"> PA2 – Direct Physical (0.4)</label>
+  <label><input type="radio" name="pa_level" value="0.6"> PA3 – Moderately Remote (0.6)</label>
+  <label><input type="radio" name="pa_level" value="0.8"> PA4 – Remote/Restricted (0.8)</label>
+  <label><input type="radio" name="pa_level" value="1.0"> PA5 – Extreme/Isolated (1.0)</label>
+</div>
+      </div>
+      <div class="field" style="grid-column: span 4;">
+        <label>Data Accessibility (DA) <span id="da_score" class="hint" style="font-weight:700">0.0</span> <span class="tooltip"><span class="tooltip-trigger">i</span><span class="tooltip-content"><div style="max-height:340px; overflow:auto;">
+  <h5>Data Accessibility (DA): Data Availability and Contextual Accessibility</h5>
+  <ul>
+    <li><strong>DA0:</strong> Artefact already available via historian/cloud/IT systems or high‑level exports; minimal effort, rich context.</li>
+    <li><strong>DA1:</strong> Remote collection via web/ICS protocols (e.g., OPC UA, S7/TCP, embedded web API).</li>
+    <li><strong>DA2:</strong> Must use plant OT LAN/engineering workstation tools; not routable over the Internet.</li>
+    <li><strong>DA3:</strong> Tap controller/fieldbus communications or device ports (e.g., PROFIBUS, Modbus RTU); raw values need interpretation.</li>
+    <li><strong>DA4:</strong> Use external service ports/removable media (USB/SD) on the PLC.</li>
+    <li><strong>DA5:</strong> Open device and interface with internal headers (JTAG/SPI); minimal contextual support.</li>
+  </ul>
+</div></span></span></label>
+        <div class="tri">
+  <label><input type="radio" name="da_level" value="0.0"> DA0 – Native/Centralized (0.0)</label>
+  <label><input type="radio" name="da_level" value="0.2"> DA1 – Internet‑Compatible (0.2)</label>
+  <label><input type="radio" name="da_level" value="0.4"> DA2 – OT LAN (0.4)</label>
+  <label><input type="radio" name="da_level" value="0.6"> DA3 – Fieldbus (0.6)</label>
+  <label><input type="radio" name="da_level" value="0.8"> DA4 – External Physical (0.8)</label>
+  <label><input type="radio" name="da_level" value="1.0"> DA5 – Internal Hardware (1.0)</label>
+</div>
+      </div>
+      <div class="field" style="grid-column: span 4;">
+        <label>Extraction Difficulty (ED) <span id="ed_score" class="hint" style="font-weight:700">0.0</span> <span class="tooltip"><span class="tooltip-trigger">i</span><span class="tooltip-content"><div style="max-height:340px; overflow:auto;">
+  <h5>Extraction Difficulty (ED): Extraction Complexity and Resource Demands</h5>
+  <ul>
+    <li><strong>ED0:</strong> Pre‑configured backups/forwarding; minimal manual effort.</li>
+    <li><strong>ED1:</strong> Vendor UI/engineering software; basic operational know‑how.</li>
+    <li><strong>ED2:</strong> Off‑the‑shelf protocol/tooling (e.g., OPC UA clients, snap7); routine setup.</li>
+    <li><strong>ED3:</strong> Write scripts or PLC routines to query or snapshot data beyond standard tools.</li>
+    <li><strong>ED4:</strong> JTAG/low‑level chip interfaces or substantial reverse engineering.</li>
+    <li><strong>ED5:</strong> One‑off hardware/logic methods or research‑grade tooling.</li>
+  </ul>
+</div></span></span></label>
+        <div class="tri">
+  <label><input type="radio" name="ed_level" value="0.0"> ED0 – Automated/Trivial (0.0)</label>
+  <label><input type="radio" name="ed_level" value="0.2"> ED1 – Built‑in Manual (0.2)</label>
+  <label><input type="radio" name="ed_level" value="0.4"> ED2 – Standard Tools (0.4)</label>
+  <label><input type="radio" name="ed_level" value="0.6"> ED3 – Custom Scripting (0.6)</label>
+  <label><input type="radio" name="ed_level" value="0.8"> ED4 – Adv. HW/RE (0.8)</label>
+  <label><input type="radio" name="ed_level" value="1.0"> ED5 – Bespoke/Novel (1.0)</label>
+</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Weights -->
+  <section class="card">
+    <h2>⚖️ Dimension Weights</h2>
+    <div class="row">
+      <div class="field" style="grid-column: span 4;">
+        <label>Data Integrity Weight (wDI)</label>
+        <input type="number" id="weight_di" min="0" max="1" step="0.01" value="0.333">
+        <div id="val_weight_di" class="validation-message"></div>
+      </div>
+      <div class="field" style="grid-column: span 4;">
+        <label>Data Volatility Weight (wDV)</label>
+        <input type="number" id="weight_dv" min="0" max="1" step="0.01" value="0.333">
+        <div id="val_weight_dv" class="validation-message"></div>
+      </div>
+      <div class="field" style="grid-column: span 4;">
+        <label>Extraction Effort Weight (wEX)</label>
+        <input type="number" id="weight_ex" min="0" max="1" step="0.01" value="0.334">
+        <div id="val_weight_ex" class="validation-message"></div>
+      </div>
+    </div>
+    <div id="weight_validation" class="hint" style="margin-top:8px;"></div>
+  </section>
+
+  <!-- Results -->
+  <section class="card">
+    <h2>📊 Assessment Results</h2>
+    <div class="outgrid">
+      <div class="kpi" id="kpi_di"><h4>Data Integrity (DI)</h4><div class="big" id="di_result">0.000</div></div>
+      <div class="kpi" id="kpi_dv"><h4>Data Volatility (DV)</h4><div class="big" id="dv_result">0.000</div></div>
+      <div class="kpi" id="kpi_ex"><h4>Extraction Effort (EX)</h4><div class="big" id="ex_result">0.000</div></div>
+      <div class="va-card" id="kpi_v"><h5>FORENSIC VALUE V(A)</h5><div class="val" id="fvf_result">0.000</div></div>
+    </div>
+    <div style="text-align:center;margin-top:10px;" class="muted">
+      <span id="confidence_text">Confidence: 0% — complete metrics and parameters to raise confidence.</span>
+    </div>
+    <div class="conf-wrap">
+      <div class="conf-bar"><div class="conf-fill" id="conf_fill"></div></div>
+      <span id="conf_pct" class="muted">0%</span>
+    </div>
+    <div style="text-align:center;margin-top:12px;padding:12px;border:1px dashed #d1d5db;border-radius:8px;background:#fff;">
+      <strong>Base FVF (Eq. 5.11):</strong> V(A) = w<sub>DI</sub>·DI + w<sub>DV</sub>·DV + w<sub>EX</sub>·(1 − EX)
+    </div>
+    <div class="btnbar" style="margin-top:12px;">
+      <button onclick="addToComparison()">➕ Add to Comparison</button>
+    </div>
+  </section>
+
+  <!-- Comparison & Export -->
+  <section class="card">
+    <h2>📚 Artefact Comparison</h2>
+    <div class="btnbar">
+      <button class="ghost" onclick="openVisualReports()">Visual Reports</button>
+
+      <button id="sortBtn" onclick="sortByVA()">Sort by V(A) ↓</button>
+      <button class="ghost" onclick="exportCSV()">Export CSV</button>
+      <button class="ghost" onclick="exportJSON()">Export JSON</button>
+      <button class="ghost" onclick="openHeatmap()">Show Heatmap</button>
+      <button class="ghost" onclick="generateExecutiveReport()">Executive Report</button>
+      <button class="warn" onclick="clearComparison()">Clear Table</button>
+    </div>
+    <table id="comparisonTable">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Artefact</th>
+          <th>R</th>
+          <th>M</th>
+          <th>T</th>
+          <th>DI</th>
+          <th>CF</th>
+          <th>RP</th>
+          <th>DV</th>
+          <th>PA</th>
+          <th>DA</th>
+          <th>ED</th>
+          <th>EX</th>
+          <th>V(A)</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+</main>
+
+<!-- Heatmap Modal -->
+<div id="hmOverlay" class="hm-overlay" aria-hidden="true">
+  <div class="hm-dialog" role="dialog" aria-modal="true" aria-labelledby="hmTitle">
+    <div class="hm-header">
+      <h3 id="hmTitle" class="hm-title">PLC Forensic Readiness Heatmap</h3>
+      <div class="hm-actions">
+        <button onclick="window.print()">Print</button>
+        <button class="close" onclick="closeHeatmap()">Close</button>
+      </div>
+    </div>
+    <div class="hm-body">
+      <div class="hm-legend">
+        <div class="hm-legend-item">
+          <div class="hm-legend-color" style="background:#dc2626"></div><span><strong>Critical (0.0–0.3)</strong></span>
+        </div>
+        <div class="hm-legend-item">
+          <div class="hm-legend-color" style="background:#f59e0b"></div><span><strong>Low (0.3–0.5)</strong></span>
+        </div>
+        <div class="hm-legend-item">
+          <div class="hm-legend-color" style="background:#0284c7"></div><span><strong>Moderate (0.5–0.7)</strong></span>
+        </div>
+        <div class="hm-legend-item">
+          <div class="hm-legend-color" style="background:#059669"></div><span><strong>High (0.7–1.0)</strong></span>
+        </div>
+      </div>
+      <div id="hmGrid" class="hm-grid"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // State
+  let comparisonRows = [];
+  let sortDescending = true;
+
+  // --- Utility: set select by displayed text
+  function setSelectByText(id, text) {
+    const sel = document.getElementById(id);
+    for (const opt of sel.options) {
+      const optText = opt.text || opt.value;
+      if (optText === text || opt.value === text) { sel.value = opt.value || optText; break; }
+    }
+    sel.dispatchEvent(new Event('change'));
+  }
+
+  // --- Integrity calculation
+  function calculateDataIntegrity() {
+    const rMetrics = ['r_m1','r_m2','r_m3','r_m4','r_m5','r_m6','r_m7'];
+    const mMetrics = ['m_m1','m_m2','m_m3','m_m4','m_m5','m_m6','m_m7','m_m8'];
+
+    function score(list) {
+      let yes=0, app=0;
+      list.forEach(n => {
+        const r = document.querySelector('input[name="'+n+'"]:checked');
+        if (r) {
+          if (r.value !== 'na') app++;
+          if (r.value === 'yes') yes++;
+        }
+      });
+      return app > 0 ? yes/app : 0;
+    }
+
+    const R = score(rMetrics);
+    const M = score(mMetrics);
+
+    // Gate for T: if MT-1 != 'yes', T=0
+    let T = 0;
+    const gate = document.querySelector('input[name="t_m1"]:checked');
+    if (gate && gate.value === 'yes') {
+      const tMetrics = ['t_m1','t_m2','t_m3'];
+      let tYes=0, tApp=0;
+      tMetrics.forEach(n => {
+        const r = document.querySelector('input[name="'+n+'"]:checked');
+        if (r) { if (r.value !== 'na') tApp++; if (r.value === 'yes') tYes++; }
+      });
+      T = tApp > 0 ? tYes/tApp : 0;
+    }
+
+    return {R, M, T, DI: (R + M + T)/3};
+  }
+
+  // --- Volatility calculation
+  function calculateDataVolatility() {
+    const C      = parseFloat(document.getElementById('observed_changes').value)  || 0;
+    const Cmax   = parseFloat(document.getElementById('max_changes').value)       || 1;
+    const Tret   = parseFloat(document.getElementById('retention_time').value)    || 1;
+    const Fmem   = parseFloat(document.getElementById('memory_factor').value)     || 1;
+    const Fbackup= parseFloat(document.getElementById('backup_factor').value)     || 1;
+    const Tcalc  = parseFloat(document.getElementById('reference_window').value)  || 8760;
+
+    const CF = 1 - Math.exp(-(C / Cmax));
+    const Teff = (Tret * Fmem * Fbackup) / Tcalc;
+    const RP = 1 - 1 / (1 + Teff);
+    const DV = Math.max(0, Math.min(1, 0.5 * (CF + (1 - RP))));
+
+    document.getElementById('cf_out').value = CF.toFixed(3);
+    document.getElementById('rp_out').value = RP.toFixed(3);
+
+    return {CF, RP, DV};
+  }
+
+  // --- Extraction calculation
+  function calculateExtractionEffort() {
+    const pa = document.querySelector('input[name="pa_level"]:checked');
+    const da = document.querySelector('input[name="da_level"]:checked');
+    const ed = document.querySelector('input[name="ed_level"]:checked');
+    const PA = pa ? parseFloat(pa.value) : 0;
+    const DA = da ? parseFloat(da.value) : 0;
+    const ED = ed ? parseFloat(ed.value) : 0;
+    const EX = (PA + DA + ED) / 3;
+    return {PA, DA, ED, EX};
+  }
+
+  
+  function setMsg(id, type, text) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.className = 'validation-message ' + (type ? ('vm-' + type) : '');
+    el.innerText = text || '';
+    if (!type) el.style.display = 'none'; else el.style.display = 'block';
+  }
+
+  function validateAll() {
+    let ok = true;
+
+    // Observed changes: >= 0
+    const C = document.getElementById('observed_changes').value;
+    if (C === '') { setMsg('val_observed_changes','info','Blank → treated as 0.'); }
+    else if (parseFloat(C) < 0) { setMsg('val_observed_changes','error','C must be ≥ 0.'); ok = false; }
+    else setMsg('val_observed_changes', null, '');
+
+    // Max changes: > 0
+    const Cmax = document.getElementById('max_changes').value;
+    if (Cmax === '') { setMsg('val_max_changes','warn','Provide Cmax > 0 for meaningful CF.'); ok = false; }
+    else if (parseFloat(Cmax) <= 0) { setMsg('val_max_changes','error','Cmax must be > 0.'); ok = false; }
+    else setMsg('val_max_changes', null, '');
+
+    // Retention time: ≥ 0.01
+    const Tret = document.getElementById('retention_time').value;
+    if (Tret === '') { setMsg('val_retention_time','warn','Provide Tret to compute RP.'); ok = false; }
+    else if (parseFloat(Tret) < 0.01) { setMsg('val_retention_time','error','Tret must be ≥ 0.01 h.'); ok = false; }
+    else setMsg('val_retention_time', null, '');
+
+    // Memory factor (typical 0.5,1.0,2.0)
+    const Fm = document.getElementById('memory_factor').value;
+    if (Fm === '') { setMsg('val_memory_factor','warn','Provide Fmem (typical 0.5/1.0/2.0).'); ok = false; }
+    else if (parseFloat(Fm) <= 0) { setMsg('val_memory_factor','error','Fmem must be > 0.'); ok = false; }
+    else if (!['0.5','1','1.0','2','2.0'].includes(Fm)) { setMsg('val_memory_factor','info','Typical values are 0.5, 1.0, 2.0.'); }
+    else setMsg('val_memory_factor', null, '');
+
+    // Backup factor (typical 0.5,1.0,2.0)
+    const Fb = document.getElementById('backup_factor').value;
+    if (Fb === '') { setMsg('val_backup_factor','warn','Provide Fbackup (typical 0.5/1.0/2.0).'); ok = false; }
+    else if (parseFloat(Fb) <= 0) { setMsg('val_backup_factor','error','Fbackup must be > 0.'); ok = false; }
+    else if (!['0.5','1','1.0','2','2.0'].includes(Fb)) { setMsg('val_backup_factor','info','Typical values are 0.5, 1.0, 2.0.'); }
+    else setMsg('val_backup_factor', null, '');
+
+    // Reference window
+    const Tw = document.getElementById('reference_window').value;
+    if (Tw === '') { setMsg('val_reference_window','warn','Provide Tcalc to finalize RP.'); ok = false; }
+    else if (parseFloat(Tw) < 1) { setMsg('val_reference_window','error','Tcalc must be ≥ 1 h.'); ok = false; }
+    else setMsg('val_reference_window', null, '');
+
+    // Meta Tcalc (windowHours) synced
+    const Tmeta = document.getElementById('windowHours').value;
+    if (Tmeta === '') { setMsg('val_windowHours','warn','Provide Tcalc in Analysis Configuration.'); ok = false; }
+    else setMsg('val_windowHours', null, '');
+
+    // Weight sanity per-field
+    ['weight_di','weight_dv','weight_ex'].forEach(id => {
+      const v = document.getElementById(id).value;
+      const tgt = 'val_' + id;
+      if (v === '') setMsg(tgt, 'warn', 'Provide a weight (0–1).'), ok = false;
+      else if (parseFloat(v) < 0 || parseFloat(v) > 1) setMsg(tgt, 'error', 'Weight must be within [0,1].'), ok = false;
+      else setMsg(tgt, null, '');
+    });
+
+    return ok;
+  }
+
+  
+  function computeConfidence() {
+   
+    function metricCredit(name) {
+      const r = document.querySelector('input[name="'+name+'"]:checked');
+      if (!r) return 0;         
+      if (r.value === 'na') return 0.5; 
+      return 1;                
+    }
+    const Rnames = ['r_m1','r_m2','r_m3','r_m4','r_m5','r_m6','r_m7'];
+    const Mnames = ['m_m1','m_m2','m_m3','m_m4','m_m5','m_m6','m_m7','m_m8'];
+    const Tgate = document.querySelector('input[name="t_m1"]:checked');
+    const Tnames = ['t_m1','t_m2','t_m3'];
+
+    let integCredits = 0, integMax = Rnames.length + Mnames.length;
+    Rnames.forEach(n => integCredits += metricCredit(n));
+    Mnames.forEach(n => integCredits += metricCredit(n));
+    if (Tgate && Tgate.value === 'yes') { // T applicable only when gate = yes
+      Tnames.forEach(n => { integCredits += metricCredit(n); });
+      integMax += Tnames.length;
+    }
+
+    const integrityScore = integMax ? (integCredits / integMax) : 0;
+
+    
+    const dvFields = [
+      {id:'observed_changes', valid: v => v !== '' && parseFloat(v) >= 0},
+      {id:'max_changes',      valid: v => v !== '' && parseFloat(v) > 0},
+      {id:'retention_time',   valid: v => v !== '' && parseFloat(v) >= 0.01},
+      {id:'memory_factor',    valid: v => v !== '' && parseFloat(v) > 0},
+      {id:'backup_factor',    valid: v => v !== '' && parseFloat(v) > 0},
+      {id:'reference_window', valid: v => v !== '' && parseFloat(v) >= 1}
+    ];
+    let dvCredit = 0;
+    dvFields.forEach(f => { const v = document.getElementById(f.id).value; if (f.valid(v)) dvCredit += 1; });
+    const dvScore = dvCredit / dvFields.length;
+
+   
+    const exNames = ['pa_level','da_level','ed_level'];
+    let exCredit = 0;
+    exNames.forEach(n => { if (document.querySelector('input[name="'+n+'"]:checked')) exCredit += 1; });
+    const exScore = exCredit / exNames.length;
+
+   
+    const wDI = parseFloat(document.getElementById('weight_di').value || '0');
+    const wDV = parseFloat(document.getElementById('weight_dv').value || '0');
+    const wEX = parseFloat(document.getElementById('weight_ex').value || '0');
+    const diff = Math.abs((wDI + wDV + wEX) - 1);
+    let weightScore = 1;
+    if (diff > 0.02) weightScore = 0;                
+    else if (diff > 0.005) weightScore = 0.5;        
+    else weightScore = 1;                             
+
+    // Aggregate (equal contribution)
+    const total = (integrityScore + dvScore + exScore + weightScore) / 4;
+    return Math.round(total * 100);
+  }
+
+ 
+  function updateProgressBar(conf) {
+    const fill = document.getElementById('conf_fill');
+    const pct = document.getElementById('conf_pct');
+    fill.style.width = conf + '%';
+    pct.textContent = conf + '%';
+    let color = '#ef4444'; // red
+    if (conf >= 80) color = '#059669'; // green
+    else if (conf >= 50) color = '#f59e0b'; // amber
+    fill.style.background = color;
+  }
+
+ 
+  function calculateVF() {
+    validateAll();
+    const {R,M,T,DI} = calculateDataIntegrity();
+    const {CF,RP,DV} = calculateDataVolatility();
+    const {PA,DA,ED,EX} = calculateExtractionEffort();
+
+    let wDI = parseFloat(document.getElementById('weight_di').value) || 0.333;
+    let wDV = parseFloat(document.getElementById('weight_dv').value) || 0.333;
+    let wEX = parseFloat(document.getElementById('weight_ex').value) || 0.334;
+    const s = wDI + wDV + wEX;
+    const box = document.getElementById('weight_validation');
+    if (Math.abs(s - 1) > 1e-6) {
+      box.textContent = 'Weights must sum to 1. Current sum = ' + s.toFixed(3);
+      box.style.color = '#92400e';
+    } else {
+      box.textContent = '';
+    }
+
+    const V = wDI*DI + wDV*DV + wEX*(1-EX);
+
+    // Update UI
+    document.getElementById('di_result').innerText = DI.toFixed(3);
+    document.getElementById('dv_result').innerText = DV.toFixed(3);
+    document.getElementById('ex_result').innerText = EX.toFixed(3);
+    document.getElementById('fvf_result').innerText = V.toFixed(3);
+
+    kpiClass(document.getElementById('kpi_di'), DI);
+    kpiClass(document.getElementById('kpi_dv'), DV);
+    kpiClass(document.getElementById('kpi_ex'), EX);
+
+    
+    const conf = computeConfidence();
+    const advice = buildConfidenceAdvice(conf);
+    const confEl = document.getElementById('confidence_text');
+    confEl.textContent = 'Confidence: ' + conf + '% — ' + advice;
+    updateProgressBar(conf);
+
+    return {R,M,T,DI,CF,RP,DV,PA,DA,ED,EX,V};
+  }
+
+  function buildConfidenceAdvice(conf) {
+    const gaps = [];
+
+    
+    const groups = [
+      {names:['r_m1','r_m2','r_m3','r_m4','r_m5','r_m6','r_m7'], label:'R metrics'},
+      {names:['m_m1','m_m2','m_m3','m_m4','m_m5','m_m6','m_m7','m_m8'], label:'M metrics'}
+    ];
+    groups.forEach(g => {
+      const unanswered = g.names.filter(n => !document.querySelector('input[name="'+n+'"]:checked'));
+      if (unanswered.length) gaps.push('Complete ' + g.label + ' ('+unanswered.length+' missing)');
+    });
+    const gate = document.querySelector('input[name="t_m1"]:checked');
+    if (gate && gate.value==='yes') {
+      ['t_m2','t_m3'].forEach(n => { if (!document.querySelector('input[name="'+n+'"]:checked')) gaps.push('Answer '+n.toUpperCase()); });
+    } else if (!gate) {
+      gaps.push('Answer MT‑1 (attestation gate)');
+    }
+
+    
+    const dvReq = [
+      {id:'observed_changes', label:'C'},
+      {id:'max_changes', label:'Cmax'},
+      {id:'retention_time', label:'Tret'},
+      {id:'memory_factor', label:'Fmem'},
+      {id:'backup_factor', label:'Fbackup'},
+      {id:'reference_window', label:'Tcalc'}
+    ];
+    dvReq.forEach(f => { if (document.getElementById(f.id).value==='') gaps.push('Set '+f.label); });
+
+    
+    ['pa_level','da_level','ed_level'].forEach(n => { if (!document.querySelector('input[name="'+n+'"]:checked')) gaps.push('Choose '+n.split('_')[0].toUpperCase()); });
+
+    // Weights
+    const wsum = (parseFloat(document.getElementById('weight_di').value||'0')
+                + parseFloat(document.getElementById('weight_dv').value||'0')
+                + parseFloat(document.getElementById('weight_ex').value||'0'));
+    if (Math.abs(wsum - 1) > 0.005) gaps.push('Fix weights to sum to 1.000');
+
+    if (!gaps.length) return 'ready for export & reporting.';
+    
+    return gaps.slice(0,3).join('; ') + (gaps.length>3 ? ' …' : '');
+  }
+
+  function kpiClass(el, value) {
+    el.className = 'kpi';
+    if (value >= 0.8) el.classList.add('excellent');
+    else if (value >= 0.6) el.classList.add('good');
+    else if (value >= 0.4) el.classList.add('moderate');
+    else el.classList.add('poor');
+  }
+
+  // Comparison table
+  function addToComparison(explicitName) {
+    const {R,M,T,DI,CF,RP,DV,PA,DA,ED,EX,V} = calculateVF();
+
+    const sel = document.getElementById('artefactSelect');
+    const label = document.getElementById('artefactName').value.trim();
+    const custom = document.getElementById('artefactCustom') ? document.getElementById('artefactCustom').value.trim() : '';
+    const selectedText = (sel && sel.selectedIndex >= 0) ? sel.options[sel.selectedIndex].text : '';
+
+    let name = explicitName || label;
+    if (!name) {
+      if (sel && sel.value === '__custom__') name = custom || 'Custom Artefact';
+      else name = selectedText || 'Unnamed Artefact';
+    }
+
+    const tcalc = parseFloat(document.getElementById('reference_window').value) || 0;
+    const analyst = document.getElementById('analyst').value.trim();
+    const notes = 'Tcalc=' + tcalc + (analyst ? (' | by ' + analyst) : '');
+
+    comparisonRows.push({artefact:name, R,M,T,DI,CF,RP,DV,PA,DA,ED,EX,V, notes});
+    renderComparison();
+  }
+
+  function renderComparison() {
+    const tbody = document.querySelector('#comparisonTable tbody');
+    tbody.innerHTML = '';
+    comparisonRows.forEach((r, idx) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = '<td>'+(idx+1)+'</td>' +
+        '<td>'+r.artefact+'</td>' +
+        '<td class="value-cell">'+r.R.toFixed(3)+'</td>' +
+        '<td class="value-cell">'+r.M.toFixed(3)+'</td>' +
+        '<td class="value-cell">'+r.T.toFixed(3)+'</td>' +
+        '<td class="value-cell">'+r.DI.toFixed(3)+'</td>' +
+        '<td class="value-cell">'+r.CF.toFixed(3)+'</td>' +
+        '<td class="value-cell">'+r.RP.toFixed(3)+'</td>' +
+        '<td class="value-cell">'+r.DV.toFixed(3)+'</td>' +
+        '<td class="value-cell">'+r.PA.toFixed(1)+'</td>' +
+        '<td class="value-cell">'+r.DA.toFixed(1)+'</td>' +
+        '<td class="value-cell">'+r.ED.toFixed(1)+'</td>' +
+        '<td class="value-cell">'+r.EX.toFixed(3)+'</td>' +
+        '<td class="value-cell">'+r.V.toFixed(3)+'</td>' +
+        '<td>'+r.notes+'</td>';
+      tbody.appendChild(tr);
+    });
+  }
+
+  function sortByVA() {
+    comparisonRows.sort((a,b) => sortDescending ? b.V - a.V : a.V - b.V);
+    sortDescending = !sortDescending;
+    document.getElementById('sortBtn').innerText = sortDescending ? 'Sort by V(A) ↓' : 'Sort by V(A) ↑';
+    renderComparison();
+  }
+
+  function clearComparison() {
+    if (confirm('Clear comparison table?')) {
+      comparisonRows = [];
+      renderComparison();
+    }
+  }
+
+  function exportCSV() {
+    if (!comparisonRows.length) { alert('No rows to export.'); return; }
+    const headers = ['#','Artefact','R','M','T','DI','CF','RP','DV','PA','DA','ED','EX','V(A)','Notes'];
+    const lines = [headers.join(',')];
+    comparisonRows.forEach((r, i) => {
+      const row = [
+        i+1,
+        '"'+r.artefact.replace(/"/g,'""')+'"',
+        r.R.toFixed(3), r.M.toFixed(3), r.T.toFixed(3), r.DI.toFixed(3),
+        r.CF.toFixed(3), r.RP.toFixed(3), r.DV.toFixed(3),
+        r.PA.toFixed(1), r.DA.toFixed(1), r.ED.toFixed(1),
+        r.EX.toFixed(3), r.V.toFixed(3),
+        '"'+r.notes.replace(/"/g,'""')+'"'
+      ].join(',');
+      lines.push(row);
+    });
+    const blob = new Blob([lines.join('\n')], {type: 'text/csv'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'fvf_comparison.csv'; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function exportJSON() {
+    if (!comparisonRows.length) { alert('No rows to export.'); return; }
+    const blob = new Blob([JSON.stringify(comparisonRows, null, 2)], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'fvf_comparison.json'; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // Heatmap integration
+  function openHeatmap() {
+    // Build dataset: if no comparison rows, include current as a single row
+    const rows = [...comparisonRows];
+    if (!rows.length) {
+      const {R,M,T,DI,CF,RP,DV,PA,DA,ED,EX,V} = calculateVF();
+      const sel = document.getElementById('artefactSelect');
+      const label = document.getElementById('artefactName').value.trim();
+      const custom = document.getElementById('artefactCustom') ? document.getElementById('artefactCustom').value.trim() : '';
+      const selectedText = (sel && sel.selectedIndex >= 0) ? sel.options[sel.selectedIndex].text : '';
+      let name = label;
+      if (!name) {
+        if (sel && sel.value === '__custom__') name = custom || 'Custom Artefact';
+        else name = selectedText || 'Unnamed Artefact';
+      }
+      rows.push({artefact:name, R,M,T,DI,CF,RP,DV,PA,DA,ED,EX,V, notes:''});
+    }
+    buildHeatmap(rows);
+    const ov = document.getElementById('hmOverlay');
+    ov.style.display = 'flex';
+    ov.setAttribute('aria-hidden', 'false');
+  }
+
+  function closeHeatmap() {
+    const ov = document.getElementById('hmOverlay');
+    ov.style.display = 'none';
+    ov.setAttribute('aria-hidden', 'true');
+    document.getElementById('hmGrid').innerHTML = '';
+  }
+
+  function readinessScore(value, favorHigher) {
+    // Convert raw metric into readiness score aligned to legend thresholds
+    return Math.max(0, Math.min(1, favorHigher ? value : (1 - value)));
+  }
+  function colorClass(score) {
+    if (score < 0.3) return 'hm-cell-critical';
+    if (score < 0.5) return 'hm-cell-low';
+    if (score < 0.7) return 'hm-cell-moderate';
+    return 'hm-cell-high';
+  }
+
+  function buildHeatmap(dataRows) {
+    const grid = document.getElementById('hmGrid');
+    grid.innerHTML = '';
+
+    function addHeaderCell(text) {
+      const d = document.createElement('div');
+      d.className = 'hm-header-cell';
+      d.innerHTML = text;
+      grid.appendChild(d);
+    }
+    function addRowHeader(name, sub) {
+      const d = document.createElement('div');
+      d.className = 'hm-row-header';
+      d.innerHTML = '<div class="hm-artifact">'+name+'</div>' + (sub ? '<div class="hm-sub">'+sub+'</div>' : '');
+      grid.appendChild(d);
+    }
+    function addCell(value, tooltip, favorHigher) {
+      const score = readinessScore(value, favorHigher);
+      const cls = colorClass(score);
+      const d = document.createElement('div');
+      d.className = 'hm-cell ' + cls;
+      d.innerHTML = value.toFixed(3) + '<div class="hm-tooltip">'+tooltip+'</div>';
+      d.addEventListener('click', () => {
+        alert('Detailed Analysis:\n\n' + tooltip + '\n\nValue: ' + value.toFixed(3));
+      });
+      grid.appendChild(d);
+    }
+
+   
+    addHeaderCell('PLC Artefact');
+    addHeaderCell('Data Integrity<br><small>(DI)</small>');
+    addHeaderCell('Data Volatility<br><small>(DV)</small>');
+    addHeaderCell('Extraction Effort<br><small>(EX)</small>');
+    addHeaderCell('Forensic Value<br><small>(V(A))</small>');
+
+   
+    dataRows.forEach(r => {
+      addRowHeader(r.artefact, r.notes || '');
+      addCell(r.DI, 'Data Integrity: '+r.DI.toFixed(3)+' — higher is better', true);
+      addCell(r.DV, 'Data Volatility: '+r.DV.toFixed(3)+' — lower is better', false);
+      addCell(r.EX, 'Extraction Effort: '+r.EX.toFixed(3)+' — lower is better', false);
+      addCell(r.V,  'Forensic Value: '+r.V.toFixed(3)+' — higher is better', true);
+    });
+  }
+
+  // Presets
+  function setRadio(name, value) {
+    const el = document.querySelector('input[name="'+name+'"][value="'+value+'"]');
+    if (el) el.checked = true;
+  }
+  function setInput(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.value = value;
+  }
+
+  function loadFirmwarePreset() {
+    setSelectByText('artefactSelect', 'Firmware');
+    document.getElementById('artefactName').value = 'Firmware (S7‑1214SP)';
+    // R
+    setRadio('r_m1','yes'); setRadio('r_m2','no'); setRadio('r_m3','yes');
+    setRadio('r_m4','no');  setRadio('r_m5','no'); setRadio('r_m6','no'); setRadio('r_m7','no');
+    // M
+    setRadio('m_m1','no');  setRadio('m_m2','yes'); setRadio('m_m3','no'); setRadio('m_m4','yes');
+    setRadio('m_m5','no');  setRadio('m_m6','no');  setRadio('m_m7','no'); setRadio('m_m8','no');
+    // T
+    setRadio('t_m1','no');  setRadio('t_m2','no');  setRadio('t_m3','no');
+    // Volatility
+    setInput('observed_changes','0');
+    setInput('max_changes','0.000114');
+    setInput('retention_time','43800');
+    setInput('memory_factor','2.0');
+    setInput('backup_factor','1.0');
+    setInput('reference_window','8760'); setInput('windowHours','8760');
+    // Extraction
+    setRadio('pa_level','0.2'); setRadio('da_level','1.0'); setRadio('ed_level','0.8');
+    calculateVF();
+  }
+
+  function loadControlProgramPreset() {
+    setSelectByText('artefactSelect', 'Control Program');
+    document.getElementById('artefactName').value = 'Control Program (S7‑1214SP)';
+    // R
+    setRadio('r_m1','yes'); setRadio('r_m2','no'); setRadio('r_m3','yes');
+    setRadio('r_m4','no');  setRadio('r_m5','no'); setRadio('r_m6','no'); setRadio('r_m7','no');
+   
+    setRadio('m_m1','yes'); setRadio('m_m2','yes'); setRadio('m_m3','yes'); setRadio('m_m4','yes');
+    setRadio('m_m5','no');  setRadio('m_m6','yes'); setRadio('m_m7','no');  setRadio('m_m8','yes');
+    // T
+    setRadio('t_m1','no');  setRadio('t_m2','no');  setRadio('t_m3','no');
+    // Volatility
+    setInput('observed_changes','0.00139');
+    setInput('max_changes','0.00833');
+    setInput('retention_time','8760');
+    setInput('memory_factor','2.0');
+    setInput('backup_factor','1.0');
+    setInput('reference_window','8760'); setInput('windowHours','8760');
+    // Extraction
+    setRadio('pa_level','0.2'); setRadio('da_level','0.4'); setRadio('ed_level','0.2');
+    calculateVF();
+  }
+
+  function loadStatusLogsPreset() {
+    setSelectByText('artefactSelect', 'PLC Status Logs');
+    document.getElementById('artefactName').value = 'PLC Status Logs (S7‑1214SP)';
+    // R
+    setRadio('r_m1','no');  setRadio('r_m2','no'); setRadio('r_m3','no');
+    setRadio('r_m4','no');  setRadio('r_m5','no'); setRadio('r_m6','yes'); setRadio('r_m7','no');
+    // M
+    setRadio('m_m1','no');  setRadio('m_m2','no'); setRadio('m_m3','yes'); setRadio('m_m4','no');
+    setRadio('m_m5','no');  setRadio('m_m6','yes'); setRadio('m_m7','no'); setRadio('m_m8','no');
+    // T
+    setRadio('t_m1','no');  setRadio('t_m2','no'); setRadio('t_m3','no');
+    // Volatility
+    setInput('observed_changes','10');
+    setInput('max_changes','50');
+    setInput('retention_time','2000');
+    setInput('memory_factor','1.0');
+    setInput('backup_factor','0.5');
+    setInput('reference_window','8760'); setInput('windowHours','8760');
+    // Extraction
+    setRadio('pa_level','0.2'); setRadio('da_level','0.2'); setRadio('ed_level','0.2');
+    calculateVF();
+  }
+
+  function loadMeasurementValuesPreset() {
+    setSelectByText('artefactSelect', 'Measurement Values');
+    document.getElementById('artefactName').value = 'Measurement Values (S7‑1214SP)';
+    
+    setRadio('r_m1','no'); setRadio('r_m2','no'); setRadio('r_m3','no');
+    setRadio('r_m4','no'); setRadio('r_m5','no'); setRadio('r_m6','no'); setRadio('r_m7','no');
+    setRadio('m_m1','no'); setRadio('m_m2','no'); setRadio('m_m3','yes'); setRadio('m_m4','yes');
+    setRadio('m_m5','yes'); setRadio('m_m6','no'); setRadio('m_m7','no'); setRadio('m_m8','no');
+    setRadio('t_m1','no'); setRadio('t_m2','no'); setRadio('t_m3','no');
+    
+    setInput('observed_changes','24000');
+    setInput('max_changes','3600');
+    setInput('retention_time','0.1');
+    setInput('memory_factor','0.5');
+    setInput('backup_factor','0.5');
+    setInput('reference_window','8760'); setInput('windowHours','8760');
+    
+    setRadio('pa_level','0.2'); setRadio('da_level','0.6'); setRadio('ed_level','0.6');
+    calculateVF();
+  }
+
+  function resetToBlank() {
+    document.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
+    ['observed_changes','max_changes','retention_time','memory_factor','backup_factor'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+    document.getElementById('reference_window').value = '8760';
+    document.getElementById('windowHours').value = '8760';
+    document.getElementById('artefactSelect').value = '';
+    document.getElementById('artefactName').value = '';
+    const cf = document.getElementById('customField'); if (cf) cf.style.display = 'none';
+    calculateVF();
+  }
+
+  
+  function syncTcalc() {
+    const src = document.getElementById('windowHours');
+    const dst = document.getElementById('reference_window');
+    if (dst.value !== src.value) dst.value = src.value;
+    calculateVF();
+  }
+
+  
+  // Executive Report 
+  function readinessBucket(v) {
+    if (v < 0.3) return 'Critical';
+    if (v < 0.5) return 'Low';
+    if (v < 0.7) return 'Moderate';
+    return 'High';
+  }
+  function readinessColor(v) {
+    if (v < 0.3) return '#dc2626';
+    if (v < 0.5) return '#f59e0b';
+    if (v < 0.7) return '#0284c7';
+    return '#059669';
+  }
+  function computeRowsForReport() {
+    const rows = [...comparisonRows];
+    if (!rows.length) {
+      const cur = calculateVF();
+      const sel = document.getElementById('artefactSelect');
+      const label = document.getElementById('artefactName').value.trim();
+      const custom = document.getElementById('artefactCustom') ? document.getElementById('artefactCustom').value.trim() : '';
+      const selectedText = (sel && sel.selectedIndex >= 0) ? sel.options[sel.selectedIndex].text : '';
+      let name = label || ((sel && sel.value === '__custom__') ? (custom || 'Custom Artefact') : (selectedText || 'Unnamed Artefact'));
+      rows.push({artefact:name, ...cur, notes:''});
+    }
+    return rows;
+  }
+  function drawHeatmapCanvas(rows) {
+    const cols = ['DI','DV','EX','V'];
+    const w = 780, h = 280;
+    const cellW = 140, cellH = 36;
+    const leftLabel = 160, topHeader = 40;
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,w,h);
+    ctx.fillStyle = '#111827'; ctx.font = '16px system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
+    ctx.fillText('Readiness Heatmap (DI, 1−DV, 1−EX, V(A))', 18, 26);
+    ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
+    cols.forEach((c,i) => {
+      const label = (c==='DI' ? 'DI' : (c==='DV' ? '1−DV' : (c==='EX' ? '1−EX' : 'V(A)')));
+      ctx.fillStyle = '#374151';
+      ctx.fillText(label, leftLabel + i*cellW + 48, topHeader-10);
+    });
+    const maxRows = Math.min(rows.length, 12);
+    for (let r=0; r<maxRows; r++) {
+      const y = topHeader + r*cellH;
+      ctx.fillStyle = '#111827';
+      const name = rows[r].artefact || ('Artefact '+(r+1));
+      ctx.fillText(name, 16, y+22);
+      const vDI = Math.max(0, Math.min(1, rows[r].DI));
+      const vDV = Math.max(0, Math.min(1, 1 - rows[r].DV));
+      const vEX = Math.max(0, Math.min(1, 1 - rows[r].EX));
+      const vVA = Math.max(0, Math.min(1, rows[r].V));
+      const valArr = [vDI, vDV, vEX, vVA];
+      valArr.forEach((val, c) => {
+        const x = leftLabel + c*cellW;
+        ctx.fillStyle = readinessColor(val);
+        ctx.fillRect(x, y, cellW-6, cellH-6);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '12px Segoe UI, Roboto, sans-serif';
+        ctx.fillText(val.toFixed(3), x+cellW/2-18, y+22);
+      });
+    }
+    return canvas.toDataURL('image/png');
+  }
+  function drawBarChartCanvas(rows) {
+    const width = 780, height = 300;
+    const canvas = document.createElement('canvas');
+    canvas.width = width; canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,width,height);
+    ctx.fillStyle = '#111827'; ctx.font = '16px system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
+    ctx.fillText('Forensic Value V(A)', 18, 26);
+    const left = 60, bottom = height - 40, top = 50, right = width - 20;
+    ctx.strokeStyle = '#9ca3af'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(left, top); ctx.lineTo(left, bottom); ctx.lineTo(right, bottom); ctx.stroke();
+    ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
+    for (let i=0;i<=10;i++){ const y = bottom - (bottom-top)*i/10; ctx.fillStyle='#6b7280'; ctx.fillText((i/10).toFixed(1), 28, y+4); ctx.strokeStyle='#e5e7eb'; ctx.beginPath(); ctx.moveTo(left+1,y); ctx.lineTo(right,y); ctx.stroke(); }
+    const sorted = [...rows].sort((a,b)=>b.V-a.V).slice(0,12);
+    const bw = (right-left-20)/Math.max(1,sorted.length);
+    sorted.forEach((r,i)=>{
+      const x = left + 10 + i*bw;
+      const y = bottom - (r.V*(bottom-top));
+      ctx.fillStyle = readinessColor(r.V); ctx.fillRect(x, y, bw*0.75, bottom-y);
+      ctx.save(); ctx.translate(x+ (bw*0.38), bottom+12); ctx.rotate(-Math.PI/4);
+      ctx.fillStyle = '#374151'; ctx.fillText((r.artefact||('A'+(i+1))).slice(0,18), 0, 0); ctx.restore();
+    });
+    return canvas.toDataURL('image/png');
+  }
+  function recommendationsFor(row) {
+    const recs = [];
+    if (row.DI < 0.3) recs.push('Raise DI: baselines, change alarms, trusted timestamps, attestation.');
+    else if (row.DI < 0.5) recs.push('Improve DI: add integrity checks and tamper-evident storage.');
+    if (row.DV > 0.7) recs.push('Reduce DV: extend Tret or Fmem/Fbackup; adjust logging cadence; offload to historian.');
+    else if (row.DV > 0.5) recs.push('Moderate DV: verify retention and change rate assumptions.');
+    if (row.EX > 0.6) recs.push('Lower EX: improve PA/DA; standardize tools; pre-stage scripts & interfaces.');
+    else if (row.EX > 0.5) recs.push('Optimize EX: formalize accessible interfaces and credentials.');
+    if (!recs.length) recs.push('Maintain current controls; document provenance and playbook steps.');
+    return recs;
+  }
+  function generateExecutiveReport() {
+    const rows = computeRowsForReport();
+    const ts = new Date().toISOString().replace('T',' ').replace(/\..+/,'');
+    const avgV = rows.reduce((s,r)=>s+r.V,0)/rows.length;
+    const buckets = {High:0, Moderate:0, Low:0, Critical:0};
+    rows.forEach(r => { buckets[readinessBucket(r.V)]++; });
+    const top3 = [...rows].sort((a,b)=>b.V-a.V).slice(0,3);
+    const heatmapURI = drawHeatmapCanvas(rows);
+    const barsURI = drawBarChartCanvas(rows);
+    const css = `
+      body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:24px;color:#111827;background:#fff;}
+      header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;border-bottom:1px solid #e5e7eb;padding-bottom:8px}
+      h1{font-size:20px;margin:0} .muted{color:#6b7280}
+      .badge{display:inline-block;padding:2px 8px;border-radius:9999px;background:#f3f4f6;border:1px solid #e5e7eb;margin-left:8px}
+      .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:12px 0}
+      .card{border:1px solid #e5e7eb;border-radius:8px;padding:12px;background:#fff}
+      table{width:100%;border-collapse:collapse;font-size:12px} th,td{border-bottom:1px solid #f3f4f6;padding:6px 8px;text-align:left} th{background:#fafafa}
+      .legend{display:flex;gap:8px;align-items:center;margin-top:6px}
+      .dot{width:10px;height:10px;border-radius:2px;display:inline-block}
+      .actions{margin-top:12px}
+      .actions button{padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;background:#f9fafb;cursor:pointer}
+      .small{font-size:12px;color:#6b7280}
+      ul{margin:8px 0 0 16px}
+      .col{display:flex;gap:12px;align-items:center}
+      @media print {.actions{display:none}}
+    `;
+    let rowsHtml = rows.map((r,i)=>`
+      <tr>
+        <td>${i+1}</td><td>${r.artefact||''}</td>
+        <td>${r.DI.toFixed(3)}</td><td>${r.DV.toFixed(3)}</td><td>${r.EX.toFixed(3)}</td><td><strong>${r.V.toFixed(3)}</strong></td>
+        <td class="small">${r.notes||''}</td>
+      </tr>`).join('');
+    let recHtml = rows.map(r=>{
+      const items = recommendationsFor(r).map(s=>`<li>${s}</li>`).join('');
+      return `<div class="card"><strong>${r.artefact||'Artefact'}</strong><ul>${items}</ul></div>`;
+    }).join('');
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>Executive Report</title>
+      <meta name="viewport" content="width=device-width,initial-scale=1"><style>${css}</style></head>
+      <body>
+      <header>
+        <h1>PLC Forensic Value — Executive Report <span class="badge">${ts}</span></h1>
+        <div class="muted">T<sub>calc</sub>: ${document.getElementById('reference_window').value} h</div>
+      </header>
+      <section class="grid">
+        <div class="card">
+          <h3>Executive Summary</h3>
+          <div class="col"><div>Average V(A): <strong>${avgV.toFixed(3)}</strong></div>
+            <div class="badge" style="background:${readinessColor(avgV)};color:#fff"> ${readinessBucket(avgV)}</div></div>
+          <div class="small" style="margin-top:6px">Readiness mix — High: ${buckets.High}, Moderate: ${buckets.Moderate}, Low: ${buckets.Low}, Critical: ${buckets.Critical}</div>
+          <div class="small" style="margin-top:6px">Top 3: ${top3.map(r=>r.artefact+' ('+r.V.toFixed(3)+')').join(', ')}</div>
+          <div class="legend">
+            <span class="dot" style="background:#059669"></span>High
+            <span class="dot" style="background:#0284c7"></span>Moderate
+            <span class="dot" style="background:#f59e0b"></span>Low
+            <span class="dot" style="background:#dc2626"></span>Critical
+          </div>
+        </div>
+        <div class="card">
+          <img src="${heatmapURI}" alt="Heatmap" style="width:100%;height:auto;border:1px solid #e5e7eb;border-radius:4px;">
+          <div class="small" style="margin-top:4px">Heatmap shows readiness for DI, 1−DV, 1−EX, and V(A).</div>
+        </div>
+      </section>
+      <section class="grid">
+        <div class="card">
+          <h3>Forensic Value (V(A)) — Bars</h3>
+          <img src="${barsURI}" alt="V(A) bars" style="width:100%;height:auto;border:1px solid #e5e7eb;border-radius:4px;">
+        </div>
+        <div class="card">
+          <h3>Strategic Recommendations</h3>
+          ${recHtml}
+        </div>
+      </section>
+      <section class="card">
+        <h3>Data Appendix</h3>
+        <table>
+          <thead><tr><th>#</th><th>Artefact</th><th>DI</th><th>DV</th><th>EX</th><th>V(A)</th><th>Notes</th></tr></thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      </section>
+      <div class="actions">
+        <button onclick="window.print()">Print / Save as PDF</button>
+        <button onclick="(function(){var a=document.createElement('a');a.download='ExecutiveReport_'+(new Date().toISOString().replace(/[:T]/g,'-').replace(/\..+/,'') )+'.html';a.href='data:text/html;charset=utf-8,'+encodeURIComponent(document.documentElement.outerHTML);a.click();})()">Download HTML</button>
+      </div>
+      </body></html>`;
+    const w = window.open('about:blank','_blank');
+    w.document.open(); w.document.write(html); w.document.close();
+  }
+
+// Visual Reports 
+function openVisualReports(){
+  const m = document.getElementById('visualReportsModal');
+  if (!m) return;
+  m.style.display = 'block';
+  
+  setTimeout(drawVisualReports, 0);
+}
+function closeVisualReports(){
+  const m = document.getElementById('visualReportsModal');
+  if (m) m.style.display = 'none';
+}
+function exportCanvasPNG(canvasId, filename){
+  const c = document.getElementById(canvasId);
+  if (!c) return;
+  const a = document.createElement('a');
+  a.download = filename || (canvasId + '.png');
+  a.href = c.toDataURL('image/png');
+  a.click();
+}
+function gatherRowsForVisuals(){
+  
+  const rows = (window.comparisonRows && comparisonRows.length) ? [...comparisonRows] : [];
+  if (!rows.length) {
+    const cur = calculateVF();
+    const sel = document.getElementById('artefactSelect');
+    const label = (document.getElementById('artefactName')?.value || '').trim();
+    const custom = (document.getElementById('artefactCustom')?.value || '').trim();
+    const selectedText = (sel && sel.selectedIndex >= 0) ? sel.options[sel.selectedIndex].text : '';
+    let name = label || ((sel && sel.value === '__custom__') ? (custom || 'Custom Artefact') : (selectedText || 'Unnamed Artefact'));
+    rows.push({artefact:name, ...cur, notes:''});
+  }
+  return rows;
+}
+function drawVisualReports(){
+  const rows = gatherRowsForVisuals();
+  drawRadar(rows);
+  drawScatter(rows);
+}
+function readinessColor(val){
+  // Use same thresholds as readiness badges
+  if (val < 0.3) return '#dc2626'; // red
+  if (val < 0.5) return '#f59e0b'; // amber
+  if (val < 0.7) return '#0284c7'; // blue
+  return '#059669'; // green
+}
+
+function drawRadar(rows){
+  const c = document.getElementById('radarCanvas'); if(!c) return;
+  const ctx = c.getContext('2d');
+  const W = c.width, H = c.height;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,W,H);
+  const cx = W/2, cy = H/2 + 10, radius = Math.min(W,H)*0.35;
+  const axes = ['DI','1−DV','1−EX','V(A)'];
+ 
+  ctx.strokeStyle = '#e5e7eb';
+  for (let ring=1; ring<=5; ring++){
+    const r = radius * (ring/5);
+    ctx.beginPath();
+    for (let i=0;i<axes.length;i++){
+      const a = (Math.PI*2/axes.length)*i - Math.PI/2;
+      const x = cx + r * Math.cos(a);
+      const y = cy + r * Math.sin(a);
+      if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.closePath(); ctx.stroke();
+  }
+ 
+  ctx.strokeStyle = '#9ca3af'; ctx.fillStyle = '#374151'; ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
+  for (let i=0;i<axes.length;i++){
+    const a = (Math.PI*2/axes.length)*i - Math.PI/2;
+    const x = cx + radius * Math.cos(a);
+    const y = cy + radius * Math.sin(a);
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(x,y); ctx.stroke();
+    const lx = cx + (radius+16) * Math.cos(a);
+    const ly = cy + (radius+16) * Math.sin(a);
+    ctx.fillText(axes[i], lx-12, ly+4);
+  }
+  
+  const sel = [...rows].sort((a,b)=>b.V - a.V).slice(0,6);
+ 
+  const palette = ['#0ea5e9','#10b981','#f59e0b','#ef4444','#8b5cf6','#22c55e'];
+  sel.forEach((r,idx)=>{
+    const vals = [
+      Math.max(0, Math.min(1, r.DI)),
+      Math.max(0, Math.min(1, 1 - r.DV)),
+      Math.max(0, Math.min(1, 1 - r.EX)),
+      Math.max(0, Math.min(1, r.V)),
+    ];
+    ctx.beginPath();
+    vals.forEach((v,i)=>{
+      const a = (Math.PI*2/axes.length)*i - Math.PI/2;
+      const x = cx + radius * v * Math.cos(a);
+      const y = cy + radius * v * Math.sin(a);
+      if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    });
+    ctx.closePath();
+    ctx.globalAlpha = 0.15; ctx.fillStyle = palette[idx % palette.length]; ctx.fill();
+    ctx.globalAlpha = 1.0; ctx.strokeStyle = palette[idx % palette.length]; ctx.lineWidth = 2; ctx.stroke();
+  });
+  // legend
+  ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
+  sel.forEach((r,idx)=>{
+    const y = 20 + idx*16;
+    ctx.fillStyle = palette[idx % palette.length];
+    ctx.fillRect(W-160, y-10, 12, 12);
+    ctx.fillStyle = '#111827';
+    ctx.fillText((r.artefact||('A'+(idx+1))).slice(0,24), W-140, y);
+  });
+}
+
+function drawScatter(rows){
+  const c = document.getElementById('scatterCanvas'); if(!c) return;
+  const ctx = c.getContext('2d');
+  const W = c.width, H = c.height;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,W,H);
+  const left=48, right=W-20, bottom=H-40, top=30;
+  
+  ctx.strokeStyle = '#9ca3af';
+  ctx.beginPath(); ctx.moveTo(left, top); ctx.lineTo(left, bottom); ctx.lineTo(right, bottom); ctx.stroke();
+  ctx.fillStyle = '#374151'; ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
+  ctx.fillText('DV →', (left+right)/2 - 14, H-12);
+  ctx.save(); ctx.translate(14, (top+bottom)/2 + 24); ctx.rotate(-Math.PI/2); ctx.fillText('EX →', 0, 0); ctx.restore();
+  
+  ctx.fillStyle = '#6b7280'; ctx.strokeStyle = '#e5e7eb';
+  for(let i=0;i<=10;i++){ 
+    const x = left + (right-left)*i/10;
+    ctx.beginPath(); ctx.moveTo(x,bottom); ctx.lineTo(x,bottom+4); ctx.stroke();
+    ctx.fillText((i/10).toFixed(1), x-8, bottom+16);
+  }
+  for(let j=0;j<=10;j++){ 
+    const y = bottom - (bottom-top)*j/10;
+    ctx.beginPath(); ctx.moveTo(left-4,y); ctx.lineTo(right,y); ctx.stroke();
+    ctx.fillText((j/10).toFixed(1), left-28, y+4);
+  }
+  
+  const Rmin=6, Rmax=18;
+  rows.forEach(r=>{
+    const x = left + (right-left) * Math.max(0, Math.min(1, r.DV));
+    const y = bottom - (bottom-top) * Math.max(0, Math.min(1, r.EX));
+    const radius = Rmin + (Rmax-Rmin) * Math.max(0, Math.min(1, r.V));
+    ctx.beginPath();
+    ctx.fillStyle = readinessColor(r.V);
+    ctx.arc(x,y,radius,0,Math.PI*2);
+    ctx.fill();
+    
+    ctx.fillStyle = '#111827';
+    ctx.fillText((r.artefact||'').slice(0,14), x+radius+4, y+4);
+  });
+}
+
+  document.addEventListener('DOMContentLoaded', () => {
+    
+    const sel = document.getElementById('artefactSelect');
+    const customField = document.getElementById('customField');
+    sel.addEventListener('change', () => { customField.style.display = (sel.value === '__custom__') ? 'block' : 'none'; });
+
+    
+    document.getElementById('windowHours').addEventListener('input', syncTcalc);
+    document.getElementById('reference_window').addEventListener('input', () => {
+      document.getElementById('windowHours').value = document.getElementById('reference_window').value;
+      calculateVF();
+    });
+
+    // Recalc on changes
+    document.querySelectorAll('input[type="radio"]').forEach(r => r.addEventListener('change', () => { calculateVF(); }));
+    document.querySelectorAll('input[type="number"]').forEach(n => n.addEventListener('input', calculateVF));
+
+    // Initial calc
+    calculateVF();
+  });
+</script>
+
+<!-- Visual Reports Modal (Radar + Scatter) -->
+<div id="visualReportsModal" class="modal" style="display:none;">
+  <div class="modal-content" style="max-width: 980px;">
+    <div class="modal-header">
+      <h3>Visual Reports</h3>
+      <button class="ghost" onclick="closeVisualReports()">Close</button>
+    </div>
+    <div class="row" style="gap:20px;">
+      <div class="card" style="flex:1; min-width: 420px;">
+        <h3 style="display:flex;justify-content:space-between;align-items:center;">
+          Radar — Readiness Profile
+          <button class="ghost" onclick="exportCanvasPNG('radarCanvas', 'Radar_Readiness.png')">Export PNG</button>
+        </h3>
+        <canvas id="radarCanvas" width="440" height="380" style="width:100%;height:auto;border:1px solid #e5e7eb;border-radius:6px;"></canvas>
+        <div class="hint">Axes: DI, 1−DV, 1−EX, V(A). Up to top 6 artefacts by V(A).</div>
+      </div>
+      <div class="card" style="flex:1; min-width: 420px;">
+        <h3 style="display:flex;justify-content:space-between;align-items:center;">
+          Scatter — DV vs EX (bubble = V(A))
+          <button class="ghost" onclick="exportCanvasPNG('scatterCanvas', 'Scatter_DV_EX.png')">Export PNG</button>
+        </h3>
+        <canvas id="scatterCanvas" width="440" height="380" style="width:100%;height:auto;border:1px solid #e5e7eb;border-radius:6px;"></canvas>
+        <div class="hint">x = DV, y = EX, color by readiness, bubble size ∝ V(A).</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body></html>

@@ -1,0 +1,24 @@
+Stuxnet PLC-centric Excerpt : SAND
+	IT/Network Infiltration Prerequisites (S1-pivot) : JOIN
+	PLC Env. Reconnaissance : SAND
+		Enumerate Controllers (T0846-DEV)
+		Identify Target PLC Metadata (T0888-DEV)  
+		Collect Logic Points & Tags (T0861-DEV)
+	PLC Logic Extraction : SAND
+		Connect via STEP7 Programming Interface (T0845-VAL)
+		Upload Existing Logic Blocks (T0845-VAL)
+	Payload Preparation : SAND
+		Develop Malicious Logic Blocks (T0873-DEV)
+		Prepare Verification Routines (T0873-DEV)
+	Payload Delivery : SAND
+		Stage Infected Project into EWS (T0873-DEL,TRIG)
+	PLC Logic Manipulation : SAND
+		Download Infected Logic into PLC (T0843-INST)
+		Modify Function Blocks & Tasking (T0889, T0821-INST)
+		Install Rootkit Components (T0851-INST, HIDE)
+		Verify Logic Deployment (T0845-VAL)
+	Process Control Sabotage : SAND
+		Manipulate Centrifuge Speed Control (T0836-EXEC, INJ)
+		Perturb I/O Image to Mask Behaviour (T0835-EXEC, HIDE)
+		Maintain Normal HMI Display (T0832-EXEC, HIDE)
+		

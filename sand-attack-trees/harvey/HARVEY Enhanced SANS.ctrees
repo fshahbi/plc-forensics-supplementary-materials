@@ -1,0 +1,24 @@
+HARVEY PLC Rootkit Attack : SAND
+	S1-Network Access Prerequisites : JOIN
+	PLC Hardware & Target Profiling : SAND
+		Enumerate Controllers (T0846-DEV)
+		Identify PLC Model & Config (T0888-DEV)
+		Collect Process Points & Tags (T0861-DEV)
+		Map JTAG Pins / GPIO / NVIC (—-DEV)
+	Firmware Reverse Engineering : SAND
+		Obtain Firmware Images (vendor pkg / JTAG) (—-DEV)
+		Analyze Memory Layout & NVIC/ISR table (—-DEV)
+		Locate I/O update routines & Timer 0A ISR (—-DEV)
+	Rootkit Development : SAND
+		Build Physics-aware Plant Model (—-DEV)
+		Implement Output Interceptors (T0836-DEV)
+		Implement Input/HMI Falsification (T0835,T0832-DEV, HIDE)
+	Firmware Modification : SAND
+		Inject Rootkit via JTAG (T0851-INST)
+		Install Control-flow Hooks (T0851-INST)
+		Sanity Check / Read-back (T0845-VAL)
+	Two-way Runtime Manipulation : SAND
+		Adversary-optimal Actuation / Set-points (T0836-EXEC, INJ)
+		Perturb I/O Image to Actuators (T0835-EXEC)
+		Fabricate PLC Inputs to Logic/HMI (T0835-EXEC, HIDE)
+		Maintain Normalised HMI View (T0832-EXEC, HIDE)
