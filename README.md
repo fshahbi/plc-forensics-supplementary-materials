@@ -1,14 +1,14 @@
-# PLC Forensics — Supplementary Materials
+# PLC Forensics (Supplementary Materials)
 
 This repository hosts the supplementary artefacts for the thesis:
 
-> **“A PLC-centric Digital Forensic Readiness Framework for Industrial Control Systems.”** (2025) — Feras Shahbi, University of Bristol.
+> **“A PLC-centric Digital Forensic Readiness Framework for Industrial Control Systems.”** (2025) - Feras Shahbi, University of Bristol.
 
 ## What’s inside
 
-- **`/fvf-assessment-tool/`** — Interactive FVF assessment tool (HTML, with tooltips, exports, validation and reporting).  
-- **`/sand-attack-trees/`** — Sequential AND (SAND) attack‑tree models used to inform and instantiate playbook slices (e.g., reconstructed *Stuxnet* and *HARVEY* sequences), as PDFs and tab‑indented text files.  
-- **`/plc-digital-forensic-readiness-playbooks/`** — PLC Digital Forensic Readiness Playbooks (PDF‑RP) provided as BPMN 2.0 `.bpmn` and `.xml` plus exported `.pdf` diagrams for review and import into **Camunda Modeler**.
+- **`/fvf-assessment-tool/`** - Interactive FVF assessment tool (HTML, with tooltips, exports, validation and reporting).  
+- **`/sand-attack-trees/`** - Sequential AND (SAND) attack‑tree models used to inform and instantiate playbook slices (e.g., reconstructed *Stuxnet* and *HARVEY* sequences), as PDFs and tab‑indented text files.  
+- **`/plc-digital-forensic-readiness-playbooks/`** - PLC Digital Forensic Readiness Playbooks (PDF‑RP) provided as BPMN 2.0 `.bpmn` and `.xml` plus exported `.pdf` diagrams for review and import into **Camunda Modeler**.
 
 > Each folder contains a small README with usage notes.
 
